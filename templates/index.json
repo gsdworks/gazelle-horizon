@@ -7,84 +7,74 @@
  * made to this file may be overwritten.
  * ------------------------------------------------------------
  */
- {
+{
   "sections": {
-    "hero_jVaWmY": {
-      "type": "hero",
+    "gazelle_hero_PRaFbk": {
+      "type": "gazelle-hero",
       "blocks": {
-        "text_YLPk4p": {
-          "type": "text",
-          "name": "t:names.heading",
+        "slide_E4VCEJ": {
+          "type": "slide",
           "settings": {
-            "text": "<p>Browse our latest products</p>",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "h2",
-            "font": "var(--font-body--family)",
-            "font_size": "1rem",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "color": "var(--color-foreground-heading)",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
+            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+          }
         },
-        "button_H9gpTf": {
-          "type": "button",
-          "name": "t:names.button",
+        "slide_gqWFVX": {
+          "type": "slide",
           "settings": {
-            "label": "Shop all",
-            "link": "shopify://collections/all",
-            "open_in_new_tab": false,
-            "style_class": "button-secondary",
-            "width": "fit-content",
-            "custom_width": 100,
-            "width_mobile": "fit-content",
-            "custom_width_mobile": 100
-          },
-          "blocks": {}
+            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+          }
+        },
+        "slide_Kitenq": {
+          "type": "slide",
+          "settings": {
+            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+          }
         }
       },
       "block_order": [
-        "text_YLPk4p",
-        "button_H9gpTf"
+        "slide_E4VCEJ",
+        "slide_gqWFVX",
+        "slide_Kitenq"
       ],
-      "name": "t:names.hero",
+      "name": "Gazelle Hero",
       "settings": {
-        "media_type_1": "image",
-        "media_type_2": "image",
-        "link": "",
-        "open_in_new_tab": false,
-        "content_direction": "column",
-        "vertical_on_mobile": true,
-        "horizontal_alignment": "space-between",
-        "vertical_alignment": "flex-end",
-        "align_baseline": true,
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "flex-end",
-        "gap": 24,
-        "section_width": "page-width",
-        "section_height": "medium",
-        "section_height_custom": 50,
-        "color_scheme": "scheme-6",
-        "toggle_overlay": true,
-        "overlay_color": "#12121266",
-        "overlay_style": "solid",
-        "gradient_direction": "to bottom",
-        "blurred_reflection": false,
-        "reflection_opacity": 75,
-        "padding-block-start": 100,
-        "padding-block-end": 72
+        "autoplay_speed": 5
       }
+    },
+    "gazelle_focus_MM7NL8": {
+      "type": "gazelle-focus",
+      "blocks": {
+        "panel_JDgq3k": {
+          "type": "panel",
+          "settings": {
+            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+          }
+        },
+        "panel_LNgVkj": {
+          "type": "panel",
+          "settings": {
+            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+          }
+        },
+        "panel_QzEqmj": {
+          "type": "panel",
+          "settings": {
+            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+          }
+        },
+        "panel_XrYiK6": {
+          "type": "panel",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "panel_JDgq3k",
+        "panel_LNgVkj",
+        "panel_QzEqmj",
+        "panel_XrYiK6"
+      ],
+      "name": "Gazelle Focus",
+      "settings": {}
     },
     "product_list_fa6P9H": {
       "type": "product-list",
@@ -279,10 +269,19 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "gazelle_strip_atmg7i": {
+      "type": "gazelle-strip",
+      "name": "Gazelle Strip",
+      "settings": {
+        "desktop_image": "shopify://shop_images/Thin_Strip_-_TEST.png"
+      }
     }
   },
   "order": [
-    "hero_jVaWmY",
-    "product_list_fa6P9H"
+    "gazelle_hero_PRaFbk",
+    "gazelle_focus_MM7NL8",
+    "product_list_fa6P9H",
+    "gazelle_strip_atmg7i"
   ]
 }
