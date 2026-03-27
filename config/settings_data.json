@@ -46,7 +46,7 @@
     "page_transition_enabled": false,
     "transition_to_main_product": false,
     "card_hover_effect": "none",
-    "badge_position": "top-right",
+    "badge_position": "bottom-left",
     "badge_corner_radius": 100,
     "badge_sale_color_scheme": "scheme-1",
     "badge_sold_out_color_scheme": "scheme-3",
@@ -68,6 +68,7 @@
     "currency_code_enabled_product_pages": false,
     "currency_code_enabled_product_cards": false,
     "currency_code_enabled_cart_items": false,
+    "show_second_image_on_hover": false,
     "product_corner_radius": 0,
     "card_corner_radius": 4,
     "show_variant_image": false,
@@ -633,5 +634,12 @@
         }
       }
     }
+  },
+  "platform_customizations": {
+    "custom_css": [
+      ".product-media__image {object-fit: contain !important;}",
+      ".product-media-container {--product-media-fit: contain !important; max-width: 220px; margin: 0 auto;}",
+      ".text-block--align-left {text-align: center !important;}"
+    ]
   }
 }
