@@ -276,10 +276,103 @@
       "settings": {
         "desktop_image": "shopify://shop_images/Thin_Strip_-_TEST.png"
       }
+    },
+    "gazelle_categories_Tx8ULP": {
+      "type": "gazelle-categories",
+      "blocks": {
+        "category_HGVGRW": {
+          "type": "category",
+          "settings": {
+            "emoji": "⭐",
+            "label": "Bestsellers",
+            "link": ""
+          }
+        },
+        "category_QzgTYN": {
+          "type": "category",
+          "settings": {
+            "emoji": "✨",
+            "label": "New Books",
+            "link": ""
+          }
+        },
+        "category_X8gEM9": {
+          "type": "category",
+          "settings": {
+            "emoji": "🕐",
+            "label": "Coming Soon",
+            "link": ""
+          }
+        },
+        "category_TrDbdU": {
+          "type": "category",
+          "settings": {
+            "emoji": "✒️",
+            "label": "Signed",
+            "link": ""
+          }
+        },
+        "category_JGMPGn": {
+          "type": "category",
+          "settings": {
+            "emoji": "📖",
+            "label": "Fiction",
+            "link": ""
+          }
+        },
+        "category_bM9Cgi": {
+          "type": "category",
+          "settings": {
+            "emoji": "📰",
+            "label": "Non-Fiction",
+            "link": ""
+          }
+        },
+        "category_ri4Mm3": {
+          "type": "category",
+          "settings": {
+            "emoji": "👦",
+            "label": "Children's",
+            "link": ""
+          }
+        },
+        "category_AHgUFJ": {
+          "type": "category",
+          "settings": {
+            "emoji": "🎓",
+            "label": "Teen & YA",
+            "link": ""
+          }
+        },
+        "category_MRfLm4": {
+          "type": "category",
+          "settings": {
+            "emoji": "🎁",
+            "label": "Gifts",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "category_HGVGRW",
+        "category_QzgTYN",
+        "category_X8gEM9",
+        "category_TrDbdU",
+        "category_JGMPGn",
+        "category_bM9Cgi",
+        "category_ri4Mm3",
+        "category_AHgUFJ",
+        "category_MRfLm4"
+      ],
+      "name": "Category Icons",
+      "settings": {
+        "heading": "You Might Be Looking For..."
+      }
     }
   },
   "order": [
     "gazelle_hero_PRaFbk",
+    "gazelle_categories_Tx8ULP",
     "gazelle_focus_MM7NL8",
     "product_list_fa6P9H",
     "gazelle_strip_atmg7i"
