@@ -1,0 +1,139 @@
+{% doc %}
+  Renders a reusable book product card: cover, format, title, author, price.
+  Contains no wrapping link — the consuming grid supplies the card link.
+
+  @param {product} product - The product to render.
+
+  @example
+  {% render 'gazelle-product-card', product: product %}
+{% enddoc %}
+
+{% liquid
+  assign format = product.type | capitalize
+  assign author = product.metafields.custom.author | remove_first: 'By (author):' | strip
+%}
+
+<article class="gazelle-product-card">
+  <div class="gazelle-product-card__cover">
+    {% if product.featured_image %}
+      {{
+        product.featured_image
+        | image_url: width: 600
+        | image_tag:
+          loading: 'lazy',
+          widths: '150, 220, 300, 440, 600',
+          sizes: '(max-width: 600px) 45vw, (max-width: 1000px) 30vw, 360px',
+          class: 'gazelle-product-card__img',
+          alt: product.title
+      }}
+    {% else %}
+      {{ 'image' | placeholder_svg_tag: 'gazelle-product-card__img gazelle-product-card__img--placeholder' }}
+    {% endif %}
+  </div>
+
+  {% if format != blank %}
+    <span class="gazelle-product-card__format">{{ format }}</span>
+  {% endif %}
+
+  <h3 class="gazelle-product-card__title">{{ product.title }}</h3>
+
+  {% if author != blank %}
+    <p class="gazelle-product-card__author">{{ author }}</p>
+  {% endif %}
+
+  <p class="gazelle-product-card__price">{{ product.price | money }}</p>
+</article>
+
+{% style %}
+  .gazelle-product-card {
+    --gz-accent: #a11f21;
+    --gz-ink: #1a1917;
+    --gz-ink-2: #3a3834;
+    --gz-muted: #6b6760;
+    --gz-cover-bg: #f3efe7;
+    /* Bound to Horizon's inheritable font settings so the card follows the
+       theme's configured fonts and stays swappable when the real brand
+       display font (Blair/ATF) lands. Fallbacks match the June mockup tokens. */
+    --gz-serif: var(--font-body--family, "Fraunces", Georgia, "Times New Roman", serif);
+    --gz-sans: var(--font-subheading--family, "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  }
+
+  .gazelle-product-card__cover {
+    aspect-ratio: 2 / 3;
+    background: var(--gz-cover-bg);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(20, 20, 20, 0.08), 0 10px 22px rgba(20, 20, 20, 0.1);
+    transition: transform 0.25s, box-shadow 0.25s;
+    margin-bottom: 14px;
+  }
+
+  .gazelle-product-card__cover::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0));
+    z-index: 1;
+  }
+
+  .gazelle-product-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .gazelle-product-card__img--placeholder {
+    opacity: 0.4;
+  }
+
+  .gazelle-product-card:hover .gazelle-product-card__cover {
+    transform: translateY(-6px);
+    box-shadow: 0 2px 4px rgba(20, 20, 20, 0.1), 0 20px 40px rgba(20, 20, 20, 0.15);
+  }
+
+  .gazelle-product-card__format {
+    display: inline-block;
+    font-family: var(--gz-sans);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--gz-muted);
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .gazelle-product-card__title {
+    font-family: var(--gz-serif);
+    font-weight: 500;
+    font-size: 17.5px;
+    line-height: 1.22;
+    color: var(--gz-ink);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .gazelle-product-card:hover .gazelle-product-card__title {
+    color: var(--gz-accent);
+  }
+
+  .gazelle-product-card__author {
+    font-family: var(--gz-serif);
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--gz-muted);
+    margin-bottom: 8px;
+  }
+
+  .gazelle-product-card__price {
+    font-family: var(--gz-serif);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gz-ink-2);
+  }
+{% endstyle %}
