@@ -10,4 +10,14 @@
   :root {
     --font-body--family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
+  @font-face {
+    font-family: 'Cinzel';
+    src: url('{{ 'Cinzel-VariableFont_wght.ttf' | asset_url }}') format('truetype');
+    font-weight: 400 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  :root {
+    --font-heading--family: 'Cinzel', Georgia, 'Times New Roman', serif;
+  }
 {% endstyle %}
