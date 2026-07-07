@@ -106,7 +106,7 @@
           "static": true,
           "settings": {
             "enable_filtering": true,
-            "filter_style": "horizontal",
+            "filter_style": "vertical",
             "filter_width": "centered",
             "text_label_case": "default",
             "show_swatch_label": false,
@@ -158,7 +158,7 @@
         "layout_type": "grid",
         "product_card_size": "medium",
         "mobile_product_card_size": "small",
-        "enable_infinite_scroll": true,
+        "enable_infinite_scroll": false,
         "products_per_page": 24,
         "product_grid_width": "centered",
         "full_width_on_mobile": true,
