@@ -38,6 +38,8 @@ Rules that follow from this:
 ## Hard rules (do not break these)
 
 - **Never edit Horizon core files.** All custom work is new files, so upstream `Shopify/horizon` can be synced without merge conflicts. If a change seems to need a core edit, stop and flag it.
+  - **Approved core-file exceptions** (deliberate, keep this list current):
+    - `layout/theme.liquid` — two lines before `</head>` (font preload + `{% render 'gazelle-fonts' %}`) to self-host the Switzer brand body font; added 7 July. Re-add these two lines if a Horizon update overwrites them.
 - **Prefix all custom files `gazelle-`.** Sections: `sections/gazelle-*.liquid`. Blocks: `blocks/gazelle-*.liquid`. Custom templates: `templates/*.gazelle.json` (e.g. `templates/product.gazelle.json`).
 - **Scope all custom CSS with `{% style %}`** inside the section/block that uses it. Horizon has **no global custom-CSS field**, so there is no other correct place for it. No separate stylesheet edits to core assets.
 - **No page builders, no third-party UI frameworks, no CSS libraries.** Vanilla Liquid + CSS + minimal JS.

@@ -1,0 +1,13 @@
+{%- comment -%} Brand body font (Switzer, self-hosted). Overrides Horizon's body font var. {%- endcomment -%}
+{% style %}
+  @font-face {
+    font-family: 'Switzer';
+    src: url('{{ 'Switzer-Variable.woff2' | asset_url }}') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  :root {
+    --font-body--family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+{% endstyle %}
