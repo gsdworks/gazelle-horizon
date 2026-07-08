@@ -75,4 +75,13 @@
       grid-template-columns: minmax(300px, 1fr) minmax(0, 1.15fr);
     }
   }
+
+  /* Inset the buy box's right edge by the band's 24px gutter so it aligns with
+     the Subjects/Classification card. margin (not padding): the details block
+     emits an inline padding-inline-end:0 that would shadow a padding override. */
+  @media screen and (min-width: 750px) {
+    .product-information .product-details {
+      margin-inline-end: var(--gz-gutter, 24px);
+    }
+  }
 {% endstyle %}
