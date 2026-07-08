@@ -1,8 +1,9 @@
 {% comment %}
   Fixes single-cover product-page sizing to a consistent height with natural
-  (per-cover) width, left-aligned, plus the June mockup's book-cover shadow and
-  spine. Overrides Horizon's forced aspect-ratio: 1/1.25 and constrain-height
-  cap, which otherwise render portrait covers small, centred, with empty space.
+  (per-cover) width, left-aligned, plus a light book-cover shadow and a crisp
+  charcoal outline. Overrides Horizon's forced aspect-ratio: 1/1.25 and
+  constrain-height cap (and its grid/flex stretch), which otherwise render
+  portrait covers small/centred with empty space, or too tall.
 
   Everything is scoped to .product-information__media and gated on :only-child,
   so multi-image galleries (multiple sibling .product-media-container elements)
@@ -16,44 +17,24 @@
 {% style %}
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */
-    max-height: none;                   /* release the constrain-height cap */
     height: clamp(360px, 40vw, 475px);  /* consistent height, fluid, ~475px desktop */
+    max-height: 475px;                  /* hard ceiling; overrides Horizon constrain-height */
     width: auto;                        /* natural width per cover, no distortion */
     max-width: 100%;
     margin-inline: 0;                   /* left-align (override Horizon auto-centring) */
-    overflow: visible;                  /* so the shadow/spine isn't clipped */
+    align-self: start;                  /* stop stretching to fill the cell */
+    justify-self: start;                /* stop stretching to fill the cell */
+    overflow: visible;                  /* so the shadow isn't clipped */
   }
 
   .product-information__media .product-media-container:only-child img {
     aspect-ratio: auto;
     object-fit: contain;                /* never crop a cover; beats media-fit-cover */
     height: 100%;
+    max-height: 475px;                  /* image itself can't exceed 475px */
     width: auto;
+    border: 1px solid #1a1917;          /* crisp charcoal outline */
     border-radius: 2px;
-    box-shadow:
-      0 1px 2px rgba(26, 25, 23, 0.08),
-      0 8px 18px rgba(26, 25, 23, 0.12),
-      0 24px 48px rgba(26, 25, 23, 0.15);
-  }
-
-  /* Spine: subtle gradient bar down the left edge for a book feel. The
-     container is position: relative (base.css) and now overflow: visible, so an
-     absolutely-positioned ::before sits over the left edge of the left-aligned
-     cover without being clipped. pointer-events: none keeps zoom/click intact. */
-  .product-information__media .product-media-container:only-child {
-    position: relative;
-  }
-
-  .product-information__media .product-media-container:only-child::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0));
-    border-radius: 2px 0 0 2px;
-    pointer-events: none;
-    z-index: 1;
+    box-shadow: 0 4px 14px rgba(26, 25, 23, 0.1);
   }
 {% endstyle %}
