@@ -15,6 +15,12 @@
 {% endcomment %}
 
 {% style %}
+  /* Constrain the product hero to 1200px so the cover's left edge lines up with
+     the 1200px Synopsis band (native page_width is "narrow" = 1400px). */
+  .product-information {
+    --page-width: calc(1200px + var(--page-margin) * 2);
+  }
+
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */
     height: clamp(360px, 40vw, 475px);  /* consistent height, fluid, ~475px desktop */
@@ -42,8 +48,20 @@
     height: 100%;
     max-height: 475px;                  /* image itself can't exceed 475px */
     width: auto;
+  }
+
+  /* Border + shadow on the actual cover image. Explicit .product-media__image
+     (0,4,0) is unambiguous and beats the theme's .product-media > * rule. */
+  .product-information__media .product-media-container:only-child .product-media__image {
     border: 1px solid #1a1917;          /* crisp charcoal outline */
     border-radius: 2px;
     box-shadow: 0 4px 14px rgba(26, 25, 23, 0.1);
+  }
+
+  /* Stop the theme's overflow:hidden on the media wrappers (>=750px) from
+     clipping the soft shadow. */
+  .product-information__media .product-media-container:only-child .product-media,
+  .product-information__media .product-media-container:only-child .product-media > * {
+    overflow: visible;
   }
 {% endstyle %}
