@@ -1,0 +1,146 @@
+{% comment %}
+  Book specifications table (label / value rows) for the product page.
+  Render via a custom-liquid block inside the native product section, e.g.
+  {% render 'gazelle-book-specs', product: closest.product %}
+
+  Each row renders only when its value is present and non-blank; empty
+  fields are skipped entirely (no empty labels).
+
+  Some fields depend on BooksoniX data that is still pending
+  (pages, dimensions via height_mm/width_mm, illustrations, audience) — those
+  rows stay hidden until the metafields are populated, which is expected.
+
+  @param {product} product - The product whose specs to render.
+{% endcomment %}
+
+{% liquid
+  assign m = product.metafields.custom
+
+  assign isbn = m.isbn
+  assign publisher = m.publisher
+  assign imprint = product.vendor
+  assign publication_date = m.publication_date
+  assign format = product.type
+  assign pages = m.pages
+  assign height_mm = m.height_mm
+  assign width_mm = m.width_mm
+  assign illustrations = m.illustrations
+  assign language = m.language
+  assign audience = m.audience
+%}
+
+<dl class="gazelle-book-specs">
+  {% if isbn != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">ISBN-13</dt>
+      <dd class="gazelle-book-specs__value">{{ isbn }}</dd>
+    </div>
+  {% endif %}
+
+  {% if publisher != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Publisher</dt>
+      <dd class="gazelle-book-specs__value">{{ publisher }}</dd>
+    </div>
+  {% endif %}
+
+  {% if imprint != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Imprint</dt>
+      <dd class="gazelle-book-specs__value">{{ imprint }}</dd>
+    </div>
+  {% endif %}
+
+  {% if publication_date != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Publication date</dt>
+      <dd class="gazelle-book-specs__value">{{ publication_date }}</dd>
+    </div>
+  {% endif %}
+
+  {% if format != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Format</dt>
+      <dd class="gazelle-book-specs__value">{{ format }}</dd>
+    </div>
+  {% endif %}
+
+  {% if pages != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Pages</dt>
+      <dd class="gazelle-book-specs__value">{{ pages }}</dd>
+    </div>
+  {% endif %}
+
+  {% if height_mm != blank and width_mm != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Dimensions</dt>
+      <dd class="gazelle-book-specs__value">{{ height_mm }} x {{ width_mm }} mm</dd>
+    </div>
+  {% endif %}
+
+  {% if illustrations != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Illustrations</dt>
+      <dd class="gazelle-book-specs__value">{{ illustrations }}</dd>
+    </div>
+  {% endif %}
+
+  {% if language != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Language</dt>
+      <dd class="gazelle-book-specs__value">{{ language }}</dd>
+    </div>
+  {% endif %}
+
+  {% if audience != blank %}
+    <div class="gazelle-book-specs__row">
+      <dt class="gazelle-book-specs__label">Audience</dt>
+      <dd class="gazelle-book-specs__value">{{ audience }}</dd>
+    </div>
+  {% endif %}
+</dl>
+
+{% style %}
+  .gazelle-book-specs {
+    /* Bound to Horizon's inheritable font setting so specs follow the theme's
+       configured body font and stay swappable. Fallback matches mockup token. */
+    --gz-specs-font: var(--font-body--family, "Fraunces", Georgia, "Times New Roman", serif);
+    --gz-specs-ink: #1a1917;
+    --gz-specs-muted: #6b6760;
+    --gz-specs-border: #e8e2d8;
+    margin: 0;
+    font-family: var(--gz-specs-font);
+  }
+
+  .gazelle-book-specs__row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--gz-specs-border);
+  }
+
+  .gazelle-book-specs__row:last-child {
+    border-bottom: 1px solid var(--gz-specs-border);
+  }
+
+  .gazelle-book-specs__label {
+    margin: 0;
+    color: var(--gz-specs-muted);
+    font-size: 14px;
+  }
+
+  .gazelle-book-specs__value {
+    margin: 0;
+    color: var(--gz-specs-ink);
+    font-size: 15px;
+  }
+
+  @media (max-width: 600px) {
+    .gazelle-book-specs__row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+  }
+{% endstyle %}
