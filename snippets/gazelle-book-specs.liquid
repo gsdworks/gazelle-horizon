@@ -16,17 +16,17 @@
 {% liquid
   assign m = product.metafields.custom
 
-  assign isbn = m.isbn
-  assign publisher = m.publisher
+  assign isbn = m.isbn.value
+  assign publisher = m.publisher.value
   assign imprint = product.vendor
-  assign publication_date = m.publication_date
+  assign publication_date = m.publication_date.value
   assign format = product.type
-  assign pages = m.pages
-  assign height_mm = m.height_mm
-  assign width_mm = m.width_mm
-  assign illustrations = m.illustrations
-  assign language = m.language
-  assign audience = m.audience
+  assign pages = m.pages.value
+  assign height_mm = m.height_mm.value
+  assign width_mm = m.width_mm.value
+  assign illustrations = m.illustrations.value
+  assign language = m.language.value
+  assign audience = m.audience.value
 %}
 
 <dl class="gazelle-book-specs">
