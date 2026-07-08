@@ -68,6 +68,14 @@
             "padding-inline-end": 0
           },
           "blocks": {
+            "custom_liquid_mkWCEH": {
+              "type": "custom-liquid",
+              "name": "t:names.custom_liquid",
+              "settings": {
+                "custom_liquid": "{% render 'gazelle-cover-styles' %}"
+              },
+              "blocks": {}
+            },
             "group_icgrde": {
               "type": "group",
               "name": "Header",
@@ -380,6 +388,7 @@
             }
           },
           "block_order": [
+            "custom_liquid_mkWCEH",
             "group_icgrde",
             "divider_VJhene",
             "variant_picker_R3rGDr",

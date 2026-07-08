@@ -23,8 +23,8 @@
 
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */
-    height: clamp(432px, 48vw, 570px);  /* consistent height, fluid, ~570px desktop */
-    max-height: 570px;                  /* hard ceiling; overrides Horizon constrain-height */
+    height: clamp(360px, 40vw, 475px);  /* consistent height, fluid, ~475px desktop */
+    max-height: 475px;                  /* hard ceiling; overrides Horizon constrain-height */
     width: auto;                        /* natural width per cover, no distortion */
     max-width: 100%;
     margin-inline: 0;                   /* left-align (override Horizon auto-centring) */
@@ -46,7 +46,7 @@
     aspect-ratio: auto;
     object-fit: contain;                /* never crop a cover; beats media-fit-cover */
     height: 100%;
-    max-height: 570px;                  /* image itself can't exceed 570px */
+    max-height: 475px;                  /* image itself can't exceed 475px */
     width: auto;
   }
 
