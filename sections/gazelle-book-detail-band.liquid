@@ -30,26 +30,79 @@
 <section class="gazelle-band">
   <div class="gazelle-band__inner">
 
-    {%- comment -%} LEFT: open detail sections {%- endcomment -%}
+    {%- comment -%}
+      LEFT: same three items rendered once. CSS shows them as tabs above 700px
+      and as accordion rows below; JS toggles the active/open state for both.
+    {%- endcomment -%}
     <div class="gazelle-band__details">
+      <div class="gazelle-band__tc" id="gz-tc-{{ section.id }}">
 
-      <div class="gazelle-band__section">
-        <h3 class="gazelle-band__h3">Synopsis</h3>
-        <div class="gazelle-band__rte">{{ product.description }}</div>
-      </div>
-
-      {% if author_bio != blank %}
-        <div class="gazelle-band__section">
-          <h3 class="gazelle-band__h3">About the Author</h3>
-          <div class="gazelle-band__rte">{{ author_bio }}</div>
+        <button
+          type="button"
+          class="gazelle-band__tab is-active"
+          id="gz-tc-{{ section.id }}-tab-0"
+          data-gz-index="0"
+          aria-controls="gz-tc-{{ section.id }}-panel-0"
+          aria-expanded="true"
+        >
+          <span class="gazelle-band__tab-label">Synopsis</span>
+          <span class="gazelle-band__indicator" aria-hidden="true"></span>
+        </button>
+        <div
+          class="gazelle-band__panel is-active"
+          id="gz-tc-{{ section.id }}-panel-0"
+          role="region"
+          aria-labelledby="gz-tc-{{ section.id }}-tab-0"
+          data-gz-index="0"
+        >
+          <div class="gazelle-band__rte">{{ product.description }}</div>
         </div>
-      {% endif %}
 
-      <div class="gazelle-band__section">
-        <h3 class="gazelle-band__h3">Product Details</h3>
-        {% render 'gazelle-book-specs', product: product %}
+        {% if author_bio != blank %}
+          <button
+            type="button"
+            class="gazelle-band__tab"
+            id="gz-tc-{{ section.id }}-tab-1"
+            data-gz-index="1"
+            aria-controls="gz-tc-{{ section.id }}-panel-1"
+            aria-expanded="false"
+          >
+            <span class="gazelle-band__tab-label">About the Author</span>
+            <span class="gazelle-band__indicator" aria-hidden="true"></span>
+          </button>
+          <div
+            class="gazelle-band__panel"
+            id="gz-tc-{{ section.id }}-panel-1"
+            role="region"
+            aria-labelledby="gz-tc-{{ section.id }}-tab-1"
+            data-gz-index="1"
+          >
+            <div class="gazelle-band__rte">{{ author_bio }}</div>
+          </div>
+        {% endif %}
+
+        <button
+          type="button"
+          class="gazelle-band__tab"
+          id="gz-tc-{{ section.id }}-tab-2"
+          data-gz-index="2"
+          aria-controls="gz-tc-{{ section.id }}-panel-2"
+          aria-expanded="false"
+        >
+          <span class="gazelle-band__tab-label">Product Details</span>
+          <span class="gazelle-band__indicator" aria-hidden="true"></span>
+        </button>
+        <div
+          class="gazelle-band__panel"
+          id="gz-tc-{{ section.id }}-panel-2"
+          role="region"
+          aria-labelledby="gz-tc-{{ section.id }}-tab-2"
+          data-gz-index="2"
+        >
+          {% render 'gazelle-book-specs', product: product %}
+        </div>
+
       </div>
-
     </div>
 
     {%- comment -%} RIGHT: subject + classification rail {%- endcomment -%}
@@ -127,6 +180,36 @@
   </div>
 </section>
 
+<script>
+  (function () {
+    var root = document.getElementById('gz-tc-{{ section.id }}');
+    if (!root) {
+      return;
+    }
+    var tabs = root.querySelectorAll('.gazelle-band__tab');
+
+    function activate(index) {
+      for (var t = 0; t < tabs.length; t++) {
+        var tab = tabs[t];
+        var i = tab.getAttribute('data-gz-index');
+        var isActive = i === index;
+        var panel = root.querySelector('.gazelle-band__panel[data-gz-index="' + i + '"]');
+        tab.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        tab.classList.toggle('is-active', isActive);
+        if (panel) {
+          panel.classList.toggle('is-active', isActive);
+        }
+      }
+    }
+
+    for (var t = 0; t < tabs.length; t++) {
+      tabs[t].addEventListener('click', function () {
+        activate(this.getAttribute('data-gz-index'));
+      });
+    }
+  })();
+</script>
+
 {% style %}
   .gazelle-band {
     /* Brand tokens (June mockup). */
@@ -156,21 +239,130 @@
     max-width: 720px;
   }
 
-  .gazelle-band__section {
-    margin-bottom: 36px;
+  /* Left column: responsive tabs (desktop) / accordion (mobile).
+     One markup; base styles = accordion, the 701px query = tabs. The active
+     panel's top border draws the full-width hairline under the tab row. */
+  .gazelle-band__tc {
+    display: block;
+    border-bottom: 1px solid var(--gz-border);
   }
 
-  .gazelle-band__section:last-child {
-    margin-bottom: 0;
-  }
-
-  .gazelle-band__h3 {
-    font-family: var(--gz-serif);
+  .gazelle-band__tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    padding: 16px 0;
+    border: none;
+    border-top: 1px solid var(--gz-border);
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--gz-sans);
+    font-size: 15px;
     font-weight: 500;
-    font-size: 22px;
-    line-height: 1.2;
+    line-height: 1.3;
     color: var(--gz-ink);
-    margin: 0 0 14px;
+  }
+
+  .gazelle-band__tab-label {
+    display: inline-block;
+  }
+
+  /* +/- indicator: shown in accordion (mobile), hidden as tabs (desktop) */
+  .gazelle-band__indicator {
+    position: relative;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    color: var(--gz-muted);
+  }
+
+  .gazelle-band__indicator::before,
+  .gazelle-band__indicator::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+  }
+
+  .gazelle-band__indicator::before {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    transform: translateY(-50%);
+  }
+
+  .gazelle-band__indicator::after {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    transform: translateX(-50%);
+    transition: opacity 0.15s;
+  }
+
+  .gazelle-band__tab.is-active .gazelle-band__indicator::after {
+    opacity: 0;
+  }
+
+  .gazelle-band__panel {
+    display: none;
+    padding: 0 0 20px;
+  }
+
+  .gazelle-band__panel.is-active {
+    display: block;
+  }
+
+  @media (min-width: 701px) {
+    .gazelle-band__tc {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: none;
+    }
+
+    .gazelle-band__tab {
+      order: -1;
+      width: auto;
+      justify-content: flex-start;
+      gap: 0;
+      padding: 14px 20px;
+      border-top: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gz-muted);
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .gazelle-band__tab:first-of-type {
+      padding-left: 0;
+    }
+
+    .gazelle-band__tab:hover {
+      color: var(--gz-ink);
+    }
+
+    .gazelle-band__tab.is-active {
+      color: var(--gz-ink);
+      border-bottom-color: var(--gz-accent);
+    }
+
+    .gazelle-band__indicator {
+      display: none;
+    }
+
+    .gazelle-band__panel {
+      order: 0;
+      width: 100%;
+      border-top: 1px solid var(--gz-border);
+      padding: 28px 0 0;
+    }
   }
 
   .gazelle-band__rte {
