@@ -65,4 +65,14 @@
   .product-information__media .product-media-container:only-child .product-media > * {
     overflow: visible;
   }
+
+  /* Hero columns as a proportional centred pair (mockup: minmax(300px,1fr) 1.15fr):
+     narrows the over-stretched 1fr cover column (killing the dead middle gap) and
+     widens the buy box, instead of the native fixed 400px column pinned far right.
+     Specificity (0,4,0) beats the native (0,3,0) rule; cover stays left-aligned. */
+  @media screen and (min-width: 750px) {
+    .product-information .product-information__grid.product-information--media-left:not(.product-information--media-none) {
+      grid-template-columns: minmax(300px, 1fr) minmax(0, 1.15fr);
+    }
+  }
 {% endstyle %}
