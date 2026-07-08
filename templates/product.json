@@ -252,6 +252,7 @@
             "accordion_UhxxHt": {
               "type": "accordion",
               "name": "t:names.accordion",
+              "disabled": true,
               "settings": {
                 "icon": "caret",
                 "dividers": true,
@@ -400,6 +401,13 @@
         "padding-block-end": 0
       }
     },
+    "gazelle_book_detail_band_AWQVdn": {
+      "type": "gazelle-book-detail-band",
+      "name": "Book Detail Band",
+      "settings": {
+        "product": "{{ closest.product }}"
+      }
+    },
     "product_recommendations_qggXJq": {
       "type": "product-recommendations",
       "blocks": {
@@ -544,6 +552,7 @@
   },
   "order": [
     "main",
+    "gazelle_book_detail_band_AWQVdn",
     "product_recommendations_qggXJq"
   ]
 }
