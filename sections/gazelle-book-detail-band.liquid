@@ -1,0 +1,298 @@
+{% comment %}
+  Book detail band — custom two-column product section matching the June
+  mockup's bottom section: open detail sections (left) + subject/classification
+  rail (right).
+
+  Product reference: uses the Horizon "product" section-setting pattern, falling
+  back to the template's global `product` object when unset.
+
+  Some fields depend on pending / if-changed BooksoniX data (author_bio and the
+  classification codes). Each section/card self-populates when its data lands and
+  stays hidden until then. NOTE: Classification currently shows subject *names*,
+  not raw industry codes, pending a Dave-side data fix.
+{% endcomment %}
+
+{% liquid
+  assign product = section.settings.product | default: product
+  assign author_bio = product.metafields.custom.author_bio.value
+
+  assign main_subjects = product.metafields.custom.main_subjects.value
+  assign thema_subjects = product.metafields.custom.thema_subjects.value
+  assign bic_subjects = product.metafields.custom.bic_subjects.value
+  assign bisac_subjects = product.metafields.custom.bisac_subjects.value
+
+  assign has_classification = false
+  if thema_subjects != blank or bic_subjects != blank or bisac_subjects != blank
+    assign has_classification = true
+  endif
+%}
+
+<section class="gazelle-band">
+  <div class="gazelle-band__inner">
+
+    {%- comment -%} LEFT: open detail sections {%- endcomment -%}
+    <div class="gazelle-band__details">
+
+      <div class="gazelle-band__section">
+        <h3 class="gazelle-band__h3">Synopsis</h3>
+        <div class="gazelle-band__rte">{{ product.description }}</div>
+      </div>
+
+      {% if author_bio != blank %}
+        <div class="gazelle-band__section">
+          <h3 class="gazelle-band__h3">About the Author</h3>
+          <div class="gazelle-band__rte">{{ author_bio }}</div>
+        </div>
+      {% endif %}
+
+      <div class="gazelle-band__section">
+        <h3 class="gazelle-band__h3">Product Details</h3>
+        {% render 'gazelle-book-specs', product: product %}
+      </div>
+
+    </div>
+
+    {%- comment -%} RIGHT: subject + classification rail {%- endcomment -%}
+    <aside class="gazelle-band__rail">
+
+      {% if main_subjects != blank %}
+        <div class="gazelle-band__card">
+          <h4 class="gazelle-band__h4">Subjects</h4>
+          <div class="gazelle-band__chips">
+            {% assign subjects = main_subjects | split: ',' %}
+            {% for subject in subjects %}
+              {% assign subject_name = subject | strip %}
+              {% if subject_name != blank %}
+                <span class="gazelle-band__chip">{{ subject_name }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if has_classification %}
+        <div class="gazelle-band__card">
+          <h4 class="gazelle-band__h4">Classification</h4>
+
+          {% if thema_subjects != blank %}
+            <div class="gazelle-band__code-group">
+              <p class="gazelle-band__code-label">Thema</p>
+              <div class="gazelle-band__chips">
+                {% assign thema_codes = thema_subjects | split: ',' %}
+                {% for code in thema_codes %}
+                  {% assign code_value = code | strip %}
+                  {% if code_value != blank %}
+                    <span class="gazelle-band__chip gazelle-band__chip--code">{{ code_value }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if bic_subjects != blank %}
+            <div class="gazelle-band__code-group">
+              <p class="gazelle-band__code-label">BIC</p>
+              <div class="gazelle-band__chips">
+                {% assign bic_codes = bic_subjects | split: ',' %}
+                {% for code in bic_codes %}
+                  {% assign code_value = code | strip %}
+                  {% if code_value != blank %}
+                    <span class="gazelle-band__chip gazelle-band__chip--code">{{ code_value }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if bisac_subjects != blank %}
+            <div class="gazelle-band__code-group">
+              <p class="gazelle-band__code-label">BISAC</p>
+              <div class="gazelle-band__chips">
+                {% assign bisac_codes = bisac_subjects | split: ',' %}
+                {% for code in bisac_codes %}
+                  {% assign code_value = code | strip %}
+                  {% if code_value != blank %}
+                    <span class="gazelle-band__chip gazelle-band__chip--code">{{ code_value }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+      {% endif %}
+
+    </aside>
+
+  </div>
+</section>
+
+{% style %}
+  .gazelle-band {
+    /* Brand tokens (June mockup). */
+    --gz-paper: #faf7f2;
+    --gz-surface: #ffffff;
+    --gz-ink: #1a1917;
+    --gz-muted: #6b6760;
+    --gz-border: #e8e2d8;
+    --gz-accent: #a11f21;
+    /* Bound to Horizon's configured fonts so the band stays swappable.
+       Headings follow the heading font; labels/body follow the body font. */
+    --gz-serif: var(--font-heading--family, "Fraunces", Georgia, "Times New Roman", serif);
+    --gz-sans: var(--font-body--family, "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  }
+
+  .gazelle-band__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px var(--gz-gutter, 24px) 48px;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+
+  .gazelle-band__details {
+    max-width: 720px;
+  }
+
+  .gazelle-band__section {
+    margin-bottom: 36px;
+  }
+
+  .gazelle-band__section:last-child {
+    margin-bottom: 0;
+  }
+
+  .gazelle-band__h3 {
+    font-family: var(--gz-serif);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--gz-ink);
+    margin: 0 0 14px;
+  }
+
+  .gazelle-band__rte {
+    font-family: var(--gz-sans);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--gz-ink);
+  }
+
+  .gazelle-band__rte p {
+    margin: 0 0 16px;
+  }
+
+  .gazelle-band__rte p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* rail */
+  .gazelle-band__rail {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+  }
+
+  .gazelle-band__card {
+    background: var(--gz-surface);
+    border: 1px solid var(--gz-border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+
+  .gazelle-band__card:last-child {
+    margin-bottom: 0;
+  }
+
+  .gazelle-band__h4 {
+    font-family: var(--gz-sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gz-muted);
+    margin: 0 0 14px;
+  }
+
+  .gazelle-band__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .gazelle-band__chip {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--gz-paper);
+    border: 1px solid var(--gz-border);
+    font-family: var(--gz-sans);
+    font-size: 13px;
+    color: var(--gz-ink);
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .gazelle-band__chip:hover {
+    border-color: var(--gz-accent);
+    color: var(--gz-accent);
+  }
+
+  .gazelle-band__chip--code {
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  .gazelle-band__code-group {
+    margin-top: 16px;
+  }
+
+  .gazelle-band__code-group:first-of-type {
+    margin-top: 0;
+  }
+
+  .gazelle-band__code-label {
+    font-family: var(--gz-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gz-muted);
+    margin: 0 0 8px;
+  }
+
+  @media (max-width: 900px) {
+    .gazelle-band__inner {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .gazelle-band__rail {
+      position: static;
+    }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Book Detail Band",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Leave as the current product on product pages."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Book Detail Band",
+      "settings": {
+        "product": "{{ closest.product }}"
+      }
+    }
+  ]
+}
+{% endschema %}
