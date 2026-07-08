@@ -22,9 +22,18 @@
     width: auto;                        /* natural width per cover, no distortion */
     max-width: 100%;
     margin-inline: 0;                   /* left-align (override Horizon auto-centring) */
+    margin-block-start: 24px;           /* align cover top with title (details block padding-block-start: 24) */
     align-self: start;                  /* stop stretching to fill the cell */
     justify-self: start;                /* stop stretching to fill the cell */
     overflow: visible;                  /* so the shadow isn't clipped */
+  }
+
+  /* Left-align the cover inside its container: overrides the theme's
+     justify-content: center on the constrain-height constraint wrapper.
+     .constrain-height is required so specificity (0,4,0) beats the theme's
+     .product-media-container.constrain-height:has(...) rule (0,3,0). */
+  .product-information__media .product-media-container.constrain-height:only-child {
+    justify-content: flex-start;
   }
 
   .product-information__media .product-media-container:only-child img {
