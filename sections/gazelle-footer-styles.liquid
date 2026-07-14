@@ -9,7 +9,8 @@
   by block id — Horizon's runtime block.id does not equal the JSON key, so .text-block--<id>
   never matches:
     .text-block.paragraph          — company info (text_KPDF4i)
-    .text-block.h3                 — newsletter heading (text_pF6rVi, inner <h2>)
+    .text-block.h3                 — newsletter heading (text_pF6rVi; inner heading tag is
+                                     targeted via :is(h1..h6) so a tag swap can't break it)
     .text-block.rte:not(.paragraph) — newsletter copy (text_HafH7P)
   This assumes the footer has exactly one text block of each preset; adding another text
   block of the same preset to the footer would need a more specific hook.
@@ -27,7 +28,7 @@
      (Company first line handled separately via ::first-line — see below.) */
   .footer-content .menu__heading,
   .footer-content .text-block.h3,
-  .footer-content .text-block.h3 h2 {
+  .footer-content .text-block.h3 :is(h1, h2, h3, h4, h5, h6) {
     font-family: var(--font-heading--family);
     font-size: 13px;
     font-weight: 700;
@@ -88,12 +89,63 @@
     color: #e8e1d2;
   }
 
+  /* Company last line ("Registered in England & Wales, Company No. …"). There is no CSS
+     hook for a trailing bare text node (CSS has ::first-line but no ::last-line), so this
+     needs the reg line wrapped in its own <p> in the text block:
+       …sales@…</a><br/>Registered…</p>  →  …sales@…</a></p><p>Registered…</p>
+     The :not(:first-child) guard keeps this dormant until then, so it can never restyle
+     the whole single-<p> company block by mistake. */
+  .footer-content .text-block.paragraph p:last-child:not(:first-child) {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #6e6a60;
+    margin-block-start: 16px;
+  }
+
   /* Newsletter copy line — the rte-preset text block (excludes the paragraph-preset
      company block, which also carries .rte). */
   .footer-content .text-block.rte:not(.paragraph),
   .footer-content .text-block.rte:not(.paragraph) p {
     font-size: 14.5px;
     color: #8a857a;
+  }
+
+  /* Newsletter signup: stack the input above a left-aligned, fit-content button.
+     Integrated button is off, so the input-group carries neither --integrated nor
+     --underline; matching that :not() chain (0,4,0) outweighs Horizon's row-layout
+     rule (0,3,0). If integrated button is toggled on later, these stop matching by design. */
+  .footer-content .email-signup__input-group:not(.email-signup__input-group--integrated):not(.email-signup__input-group--underline) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .footer-content .email-signup__input {
+    width: 100%;
+  }
+
+  .footer-content .email-signup__button {
+    width: fit-content;
+  }
+
+  /* Utilities bar (footer-utilities.liquid → .utilities). DELIBERATELY outside
+     .footer-content — it's a separate section below the footer. typography-style only sets
+     CSS vars inline, not real properties, so these class selectors win without !important.
+     The policy list renders as a trigger button in the bar (.policy-list-trigger); the
+     actual policy links live in a light-scheme popover, left native on purpose. */
+  .utilities .footer-utilities__group-copyright,
+  .utilities .footer-utilities__group-copyright a {
+    font-size: 12.5px;
+    color: #6e6a60;
+  }
+
+  .utilities .policy-list-trigger {
+    font-size: 12.5px;
+    color: #8a857a;
+  }
+
+  .utilities .policy-list-trigger:hover {
+    color: #d4cfc2;
   }
 {% endstyle %}
 
