@@ -8,25 +8,38 @@
   --page-width override that used to live in gazelle-cover-styles.liquid), we set the
   global page width here, once.
 
-  How: --page-width is declared on <body> via the .page-width-narrow class (assets/base.css),
-  NOT on :root — so a :root override would be shadowed by the body's own declaration. We
-  therefore override on the body element itself. Selector is body.page-width-narrow ONLY,
-  deliberately: it is scoped to the current "narrow" setting so the theme-editor page-width
-  control stays a live escape hatch — switch the setting to any other preset and this
-  override stops applying, restoring native behaviour.
+  How: we override --page-content-width only, and let Horizon's native calc derive
+  --page-width from it. base.css declares both on the body via .page-width-narrow:
 
-  We mirror the old local hack's formula exactly — calc(1200px + var(--page-margin) * 2),
-  i.e. 1200px of content plus the preset's own --page-margin gap (native preset math). We
-  override --page-width ONLY. --page-content-width is deliberately left at the preset value
-  (90rem); it feeds --util-page-margin-offset (carousel / edge-offset elements), so it is the
-  first suspect if any edge-aligned element misaligns after this change.
+    --page-content-width: var(--narrow-page-width);
+    --page-width: calc(var(--page-content-width) + (var(--page-margin) * 2));
+
+  var() inside a custom property resolves at computed-value time against that property's
+  computed value ON THE SAME ELEMENT. So the cascade settles --page-content-width to our
+  1200px first (body.page-width-narrow, 0-1-1, beats base.css's .page-width-narrow, 0-1-0),
+  and the native --page-width calc then derives calc(1200px + var(--page-margin) * 2) from
+  it — the same result as the explicit override this replaces, but with BOTH variables now
+  agreeing at 1200. That agreement is the point: --page-content-width also feeds
+  --util-page-margin-offset (base.css .section), which carousel / edge-offset components
+  read. Leaving it at the 90rem preset while --page-width said 1200 is what caused the
+  featured-collection bleed found in the 14 Jul sweep.
+
+  Note: --page-width is declared on <body>, NOT :root, so a :root override would be shadowed
+  by the body's own declaration — hence the body selector. It is body.page-width-narrow ONLY,
+  deliberately: scoped to the current "narrow" setting so the theme-editor page-width control
+  stays a live escape hatch — switch the setting to any other preset and this override stops
+  applying, restoring native behaviour.
+
+  Known gap: sections/main-blog.liquid re-declares both variables on .blog-posts, so the blog
+  page keeps the native preset width regardless of this snippet. It is a Horizon core file, so
+  it is left alone.
 
   Emits a {% style %} block only — no markup. Rendered from layout/theme.liquid, adjacent to
-  the gazelle-fonts hook (last in <head>, so it wins equal-specificity ties).
+  the gazelle-fonts hook (last in <head>).
 {% endcomment %}
 
 {% style %}
   body.page-width-narrow {
-    --page-width: calc(1200px + var(--page-margin) * 2);
+    --page-content-width: 1200px;
   }
 {% endstyle %}
