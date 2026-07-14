@@ -11,6 +11,11 @@
   "type": "footer",
   "name": "t:names.footer",
   "sections": {
+    "gazelle_footer_styles_C3p9m3": {
+      "type": "gazelle-footer-styles",
+      "name": "Gazelle footer styles",
+      "settings": {}
+    },
     "footer": {
       "type": "footer",
       "blocks": {
@@ -279,6 +284,7 @@
     }
   },
   "order": [
+    "gazelle_footer_styles_C3p9m3",
     "footer",
     "utilities"
   ]
