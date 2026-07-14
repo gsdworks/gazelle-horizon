@@ -21,7 +21,7 @@
       "blocks": {
         "group_wErUQf": {
           "type": "group",
-          "name": "Join our email list",
+          "name": "Newsletter",
           "settings": {
             "content_direction": "column",
             "vertical_on_mobile": true,
@@ -63,7 +63,7 @@
               "type": "text",
               "name": "Heading",
               "settings": {
-                "text": "<h2>Join our email list</h2>",
+                "text": "<h3>Newsletter</h3>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "left",
@@ -89,7 +89,7 @@
               "type": "text",
               "name": "Text",
               "settings": {
-                "text": "<p>Get exclusive deals and early access to new products.</p>",
+                "text": "<p>Stay informed about the latest new titles, offers and events</p>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "left",
@@ -123,7 +123,7 @@
                 "heading_preset": "h3",
                 "border_style": "all",
                 "border_width": 1,
-                "border_radius": 100,
+                "border_radius": 2,
                 "input_type_preset": "paragraph",
                 "style_class": "button",
                 "display_type": "text",
