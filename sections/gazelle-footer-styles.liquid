@@ -1,0 +1,101 @@
+{% comment %}
+  Scoped styling for the natively-built footer (sections/footer.liquid → .footer-content).
+  Emits a {% style %} block only — renders NO visible markup. Add it to the footer section
+  group via the theme editor (it's enabled_on the "footer" group).
+
+  Everything is scoped to .footer-content, which is emitted ONLY by sections/footer.liquid,
+  so nothing leaks to the header (which uses .menu-list__* classes) or the utilities bar
+  (a separate section). The three text blocks are targeted by Horizon's own stable per-block
+  class .text-block--<block.id>:
+    text_KPDF4i — company info      text_pF6rVi — newsletter heading      text_HafH7P — newsletter copy
+  Those ids break only if a block is deleted and re-added in the editor.
+
+  Fonts bound to var(--font-heading--family) (Cinzel) per the tokenised-font rule.
+  Colours are footer-specific tints on the charcoal scheme, hardcoded like the product card.
+
+  NOTE: the two menu blocks must have their "Heading" field populated in the editor —
+  a blank heading gets menu.liquid's .menu__heading--empty { display:none }, so no column
+  heading renders on desktop and there is nothing for the rules below to style.
+{% endcomment %}
+
+{% style %}
+  /* Shared heading treatment: menu column headings + newsletter heading + company first line */
+  .footer-content .menu__heading,
+  .footer-content .text-block--text_pF6rVi,
+  .footer-content .text-block--text_pF6rVi h2,
+  .footer-content .text-block--text_KPDF4i p:first-child {
+    font-family: var(--font-heading--family);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #e8e1d2;
+  }
+
+  /* Menu column headings — spacing. The heading owns the gap; neutralise menu.liquid's
+     native --spacing--size gap on the content so it isn't added on top. */
+  .footer-content .menu .details-content {
+    margin-block-start: 0;
+  }
+
+  .footer-content .menu__heading {
+    margin-block-end: 26px;
+  }
+
+  /* Menu links + item spacing (independent of the block's menu_spacing setting) */
+  .footer-content .menu__item a {
+    font-size: 15.5px;
+    color: #c4bfb2;
+    text-decoration: none;
+  }
+
+  .footer-content .menu__item a:hover {
+    color: #fff;
+  }
+
+  .footer-content .menu__item + .menu__item {
+    margin-block-start: 14px;
+  }
+
+  /* Company info body */
+  .footer-content .text-block--text_KPDF4i,
+  .footer-content .text-block--text_KPDF4i p {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #c4bfb2;
+  }
+
+  .footer-content .text-block--text_KPDF4i a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  /* Company first line ("Gazelle Book Services Ltd") — now its own paragraph.
+     Inherits the shared heading treatment above; add its own line-height + spacing. */
+  .footer-content .text-block--text_KPDF4i p:first-child {
+    line-height: normal;
+    margin-block-end: 18px;
+  }
+
+  /* Newsletter copy line */
+  .footer-content .text-block--text_HafH7P,
+  .footer-content .text-block--text_HafH7P p {
+    font-size: 14.5px;
+    color: #8a857a;
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Gazelle footer styles",
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "settings": [],
+  "presets": [
+    {
+      "name": "Gazelle footer styles"
+    }
+  ]
+}
+{% endschema %}
