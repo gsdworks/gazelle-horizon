@@ -190,7 +190,7 @@
           "type": "text",
           "name": "t:names.text",
           "settings": {
-            "text": "<p>Gazelle Book Services Ltd <br/><br/>White Cross Mills, <br/>Hightown, Lancaster, Lancashire, <br/>LA1 4XS<br/>+44 (0)1524528500<br/><a href=\"mailto:sales@gazellebookservices.co.uk\">sales@gazellebookservices.co.uk</a><br/>Registered in England & Wales, Company No. 02175658</p>",
+            "text": "<p>Gazelle Book Services Ltd <br/><br/>White Cross Mills, <br/>Hightown, Lancaster, Lancashire, <br/>LA1 4XS<br/>+44 (0)1524528500<br/><a href=\"mailto:sales@gazellebookservices.co.uk\">sales@gazellebookservices.co.uk</a></p><p>Registered in England & Wales, Company No. 02175658</p>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
