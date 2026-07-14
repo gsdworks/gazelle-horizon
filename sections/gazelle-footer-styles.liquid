@@ -5,10 +5,14 @@
 
   Everything is scoped to .footer-content, which is emitted ONLY by sections/footer.liquid,
   so nothing leaks to the header (which uses .menu-list__* classes) or the utilities bar
-  (a separate section). The three text blocks are targeted by Horizon's own stable per-block
-  class .text-block--<block.id>:
-    text_KPDF4i — company info      text_pF6rVi — newsletter heading      text_HafH7P — newsletter copy
-  Those ids break only if a block is deleted and re-added in the editor.
+  (a separate section). The three text blocks are targeted by their type_preset class, NOT
+  by block id — Horizon's runtime block.id does not equal the JSON key, so .text-block--<id>
+  never matches:
+    .text-block.paragraph          — company info (text_KPDF4i)
+    .text-block.h3                 — newsletter heading (text_pF6rVi, inner <h2>)
+    .text-block.rte:not(.paragraph) — newsletter copy (text_HafH7P)
+  This assumes the footer has exactly one text block of each preset; adding another text
+  block of the same preset to the footer would need a more specific hook.
 
   Fonts bound to var(--font-heading--family) (Cinzel) per the tokenised-font rule.
   Colours are footer-specific tints on the charcoal scheme, hardcoded like the product card.
@@ -19,11 +23,11 @@
 {% endcomment %}
 
 {% style %}
-  /* Shared heading treatment: menu column headings + newsletter heading + company first line */
+  /* Shared heading treatment: menu column headings + newsletter heading.
+     (Company first line handled separately via ::first-line — see below.) */
   .footer-content .menu__heading,
-  .footer-content .text-block--text_pF6rVi,
-  .footer-content .text-block--text_pF6rVi h2,
-  .footer-content .text-block--text_KPDF4i p:first-child {
+  .footer-content .text-block.h3,
+  .footer-content .text-block.h3 h2 {
     font-family: var(--font-heading--family);
     font-size: 13px;
     font-weight: 700;
@@ -57,29 +61,37 @@
     margin-block-start: 14px;
   }
 
-  /* Company info body */
-  .footer-content .text-block--text_KPDF4i,
-  .footer-content .text-block--text_KPDF4i p {
+  /* Company info body — the top-level paragraph-preset text block */
+  .footer-content .text-block.paragraph,
+  .footer-content .text-block.paragraph p {
     font-size: 15px;
     line-height: 1.85;
     color: #c4bfb2;
   }
 
-  .footer-content .text-block--text_KPDF4i a {
+  .footer-content .text-block.paragraph a {
     color: inherit;
     text-decoration: underline;
   }
 
-  /* Company first line ("Gazelle Book Services Ltd") — now its own paragraph.
-     Inherits the shared heading treatment above; add its own line-height + spacing. */
-  .footer-content .text-block--text_KPDF4i p:first-child {
+  /* Company first line ("Gazelle Book Services Ltd"). The content is a single <p>
+     (name + <br/><br/> + address), so ::first-line is the only clean hook — the
+     explicit break pins it to exactly the company name. ::first-line supports
+     font/colour/spacing/transform + line-height only; the <br/><br/> gives the gap. */
+  .footer-content .text-block.paragraph p:first-child::first-line {
+    font-family: var(--font-heading--family);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
     line-height: normal;
-    margin-block-end: 18px;
+    color: #e8e1d2;
   }
 
-  /* Newsletter copy line */
-  .footer-content .text-block--text_HafH7P,
-  .footer-content .text-block--text_HafH7P p {
+  /* Newsletter copy line — the rte-preset text block (excludes the paragraph-preset
+     company block, which also carries .rte). */
+  .footer-content .text-block.rte:not(.paragraph),
+  .footer-content .text-block.rte:not(.paragraph) p {
     font-size: 14.5px;
     color: #8a857a;
   }
