@@ -15,11 +15,8 @@
 {% endcomment %}
 
 {% style %}
-  /* Constrain the product hero to 1200px so the cover's left edge lines up with
-     the 1200px Synopsis band (native page_width is "narrow" = 1400px). */
-  .product-information {
-    --page-width: calc(1200px + var(--page-margin) * 2);
-  }
+  /* Page width (1200px) is now set globally in snippets/gazelle-layout.liquid —
+     the local --page-width override that used to live here has been removed. */
 
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */

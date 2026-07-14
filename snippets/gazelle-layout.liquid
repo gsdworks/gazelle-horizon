@@ -1,0 +1,32 @@
+{% comment %}
+  gazelle-layout — THE single source of truth for global page width.
+  Added 14 July 2026.
+
+  Why: Horizon's page_width theme setting is "narrow", which the theme resolves to
+  --narrow-page-width: 90rem (~1400px). Every June mockup and every gazelle- custom
+  section is built to 1200px. Rather than a per-page hack (this replaces the local
+  --page-width override that used to live in gazelle-cover-styles.liquid), we set the
+  global page width here, once.
+
+  How: --page-width is declared on <body> via the .page-width-narrow class (assets/base.css),
+  NOT on :root — so a :root override would be shadowed by the body's own declaration. We
+  therefore override on the body element itself. Selector is body.page-width-narrow ONLY,
+  deliberately: it is scoped to the current "narrow" setting so the theme-editor page-width
+  control stays a live escape hatch — switch the setting to any other preset and this
+  override stops applying, restoring native behaviour.
+
+  We mirror the old local hack's formula exactly — calc(1200px + var(--page-margin) * 2),
+  i.e. 1200px of content plus the preset's own --page-margin gap (native preset math). We
+  override --page-width ONLY. --page-content-width is deliberately left at the preset value
+  (90rem); it feeds --util-page-margin-offset (carousel / edge-offset elements), so it is the
+  first suspect if any edge-aligned element misaligns after this change.
+
+  Emits a {% style %} block only — no markup. Rendered from layout/theme.liquid, adjacent to
+  the gazelle-fonts hook (last in <head>, so it wins equal-specificity ties).
+{% endcomment %}
+
+{% style %}
+  body.page-width-narrow {
+    --page-width: calc(1200px + var(--page-margin) * 2);
+  }
+{% endstyle %}

@@ -38,6 +38,7 @@
     {{ content_for_header }}
     <link rel="preload" as="font" type="font/woff2" href="{{ 'Switzer-Variable.woff2' | asset_url }}" crossorigin>
     {% render 'gazelle-fonts' %}
+    {% render 'gazelle-layout' %}
   </head>
 
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
