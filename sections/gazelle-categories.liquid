@@ -11,21 +11,34 @@
   the live section. Only the schema display name changed (16 July).
 
   16 July changes:
-  - Renamed "Category Icons" → "Icon Row" (it is no longer category-specific).
+  - Renamed "Category Icons" → "Icon Row" (no longer category-specific).
   - Icons can be IMAGES (PNG/SVG) as well as emoji. Image wins when set; emoji is
     the fallback. Per-block, so instances can mix.
   - Image fills the circle (object-fit: cover) and is clipped by the circle's
     border-radius + overflow:hidden, so artwork with square or white corners still
     reads as a circle.
-  - Grey placeholder plate is suppressed on image blocks (the artwork IS the circle);
+  - Grey placeholder plate suppressed on image blocks (the artwork IS the circle);
     still shown behind emoji blocks.
-  - CSS is now scoped to the section instance (#gazelle-icon-row-{{ section.id }}),
-    so two instances on one page can be styled independently later without a
-    selector collision.
-  - Heading default is now blank and the preset is lean (3 blocks) — the old
-    9-category preset presumed one use.
+  - CSS scoped to the section instance (#gazelle-icon-row-{{ section.id }}), so two
+    instances on one page can be styled independently without a selector collision.
+  - Heading default blank; preset lean (3 blocks).
+  - ICON SIZE is now a theme-editor setting (60–280px). Everything derives from it
+    via --gz-icon-size:
+      * item width tracks the circle (min 88px so short labels don't cramp)
+      * gap scales with size, clamped 16–48px, so big circles don't look cramped
+      * emoji scales at ~35% of the circle
+      * MOBILE AUTO-CAPS at min(size, 120px) — a 280px circle on a 375px phone
+        would show ~1.3 items. Deliberate: no separate mobile control needed.
+    NOTE: there is deliberately NO "columns per row" setting. Size + wrap gives the
+    per-row count implicitly (e.g. 260px → 4 across in a 1200px row) and cannot
+    overflow. A columns setting would fight the size slider.
+  - max_blocks raised 12 → 16.
   - Links were already supported (block.settings.link) — unchanged.
 {% endcomment %}
+
+{%- liquid
+  assign icon_size = section.settings.icon_size | default: 90
+-%}
 
 <section
   class="gazelle-icon-row"
@@ -50,7 +63,7 @@
               {% if block.settings.image != blank %}
                 <img
                   class="gazelle-icon-row__image"
-                  src="{{ block.settings.image | image_url: width: 220 }}"
+                  src="{{ block.settings.image | image_url: width: 560 }}"
                   alt=""
                   width="{{ block.settings.image.width }}"
                   height="{{ block.settings.image.height }}"
@@ -60,7 +73,9 @@
                 <span class="gazelle-icon-row__emoji" aria-hidden="true">{{ block.settings.emoji }}</span>
               {% endif %}
             </div>
-            <span class="gazelle-icon-row__label">{{ block.settings.label }}</span>
+            {% if block.settings.label != blank %}
+              <span class="gazelle-icon-row__label">{{ block.settings.label }}</span>
+            {% endif %}
           </a>
         {% endif %}
       {% endfor %}
@@ -71,6 +86,8 @@
 
 {% style %}
   #gazelle-icon-row-{{ section.id }} {
+    /* Single source of truth for this instance's sizing. */
+    --gz-icon-size: {{ icon_size }}px;
     padding: 52px 24px;
     background: #ffffff;
   }
@@ -93,7 +110,9 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 28px 20px;
+    /* Gap scales with the circle so big icons don't crowd. */
+    gap: clamp(16px, calc(var(--gz-icon-size) * 0.3), 48px)
+         clamp(16px, calc(var(--gz-icon-size) * 0.25), 40px);
   }
 
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item {
@@ -103,12 +122,13 @@
     gap: 12px;
     text-decoration: none;
     color: inherit;
-    width: 100px;
+    /* Track the circle, but never so narrow that a short label cramps. */
+    width: max(var(--gz-icon-size), 88px);
   }
 
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle {
-    width: 90px;
-    height: 90px;
+    width: var(--gz-icon-size);
+    height: var(--gz-icon-size);
     border-radius: 50%;
     background: #eef0f3;
     display: flex;
@@ -117,6 +137,7 @@
     transition: background 0.2s ease, transform 0.2s ease;
     /* Clips image artwork to the circle regardless of the source file's corners. */
     overflow: hidden;
+    flex: 0 0 auto;
   }
 
   /* The artwork is the circle — no grey plate behind it. */
@@ -143,7 +164,8 @@
   }
 
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__emoji {
-    font-size: 2rem;
+    /* Scale the emoji with the circle. */
+    font-size: calc(var(--gz-icon-size) * 0.35);
     line-height: 1;
     display: block;
   }
@@ -167,6 +189,8 @@
 
   @media (max-width: 640px) {
     #gazelle-icon-row-{{ section.id }} {
+      /* Cap on mobile — a 280px circle on a 375px phone shows ~1.3 items. */
+      --gz-icon-size: min({{ icon_size }}px, 120px);
       padding: 36px 0;
     }
 
@@ -183,7 +207,7 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      gap: 0;
+      gap: 16px;
       padding: 0 16px 12px;
     }
 
@@ -193,17 +217,7 @@
 
     #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item {
       flex: 0 0 auto;
-      width: 88px;
-      padding: 0 8px;
-    }
-
-    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle {
-      width: 72px;
-      height: 72px;
-    }
-
-    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__emoji {
-      font-size: 1.6rem;
+      width: max(var(--gz-icon-size), 80px);
     }
 
     #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__label {
@@ -223,6 +237,17 @@
       "id": "heading",
       "label": "Heading",
       "info": "Optional. Leave empty for no heading."
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 60,
+      "max": 280,
+      "step": 10,
+      "unit": "px",
+      "default": 90,
+      "info": "Circle diameter on desktop. Bigger icons fit fewer per row and the rest wrap — e.g. 260px gives 4 across. Capped at 120px on mobile so the row stays scrollable."
     }
   ],
   "blocks": [
@@ -234,7 +259,7 @@
           "type": "image_picker",
           "id": "image",
           "label": "Icon image (optional)",
-          "info": "Square image, 220 x 220px or larger (400px for retina). Fills the circle and is clipped to it. If empty, the emoji below is used."
+          "info": "Square image. Use at least 2x your icon size (e.g. 560px for a 280px circle) so it stays sharp on retina. If empty, the emoji below is used."
         },
         {
           "type": "text",
@@ -246,7 +271,8 @@
         {
           "type": "text",
           "id": "label",
-          "label": "Label"
+          "label": "Label",
+          "info": "Optional. Leave empty when the artwork already carries the name."
         },
         {
           "type": "url",
@@ -267,6 +293,6 @@
       ]
     }
   ],
-  "max_blocks": 12
+  "max_blocks": 16
 }
 {% endschema %}
