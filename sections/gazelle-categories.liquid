@@ -1,28 +1,66 @@
 {% comment %}
   Section: gazelle-categories.liquid
-  Circular icon/emoji grid linking to categories or collections
-  Icons and links are fully configurable in the theme editor
+  Display name: "Icon Row"
+
+  A row of circular icon links. Reusable — add it more than once per page with
+  different content (e.g. one instance for browse categories, one for publisher
+  highlights). Each instance holds its own blocks and settings.
+
+  ⚠️ FILENAME: stays `gazelle-categories.liquid` deliberately. The section `type`
+  in templates/index.json is `gazelle-categories`; renaming the file would orphan
+  the live section. Only the schema display name changed (16 July).
+
+  16 July changes:
+  - Renamed "Category Icons" → "Icon Row" (it is no longer category-specific).
+  - Icons can be IMAGES (PNG/SVG) as well as emoji. Image wins when set; emoji is
+    the fallback. Per-block, so instances can mix.
+  - Image fills the circle (object-fit: cover) and is clipped by the circle's
+    border-radius + overflow:hidden, so artwork with square or white corners still
+    reads as a circle.
+  - Grey placeholder plate is suppressed on image blocks (the artwork IS the circle);
+    still shown behind emoji blocks.
+  - CSS is now scoped to the section instance (#gazelle-icon-row-{{ section.id }}),
+    so two instances on one page can be styled independently later without a
+    selector collision.
+  - Heading default is now blank and the preset is lean (3 blocks) — the old
+    9-category preset presumed one use.
+  - Links were already supported (block.settings.link) — unchanged.
 {% endcomment %}
 
-<section class="gazelle-categories" {{ section.shopify_attributes }}>
-  <div class="gazelle-categories__inner">
+<section
+  class="gazelle-icon-row"
+  id="gazelle-icon-row-{{ section.id }}"
+  {{ section.shopify_attributes }}
+>
+  <div class="gazelle-icon-row__inner">
 
     {% if section.settings.heading != blank %}
-      <h2 class="gazelle-categories__heading">{{ section.settings.heading }}</h2>
+      <h2 class="gazelle-icon-row__heading">{{ section.settings.heading }}</h2>
     {% endif %}
 
-    <div class="gazelle-categories__grid">
+    <div class="gazelle-icon-row__grid">
       {% for block in section.blocks %}
         {% if block.type == 'category' %}
           <a
-            class="gazelle-categories__item"
-            href="{{ block.settings.link }}"
+            class="gazelle-icon-row__item"
+            href="{{ block.settings.link | default: '#' }}"
             {{ block.shopify_attributes }}
           >
-            <div class="gazelle-categories__circle">
-              <span class="gazelle-categories__emoji" aria-hidden="true">{{ block.settings.emoji }}</span>
+            <div class="gazelle-icon-row__circle{% if block.settings.image != blank %} has-image{% endif %}">
+              {% if block.settings.image != blank %}
+                <img
+                  class="gazelle-icon-row__image"
+                  src="{{ block.settings.image | image_url: width: 220 }}"
+                  alt=""
+                  width="{{ block.settings.image.width }}"
+                  height="{{ block.settings.image.height }}"
+                  loading="lazy"
+                >
+              {% else %}
+                <span class="gazelle-icon-row__emoji" aria-hidden="true">{{ block.settings.emoji }}</span>
+              {% endif %}
             </div>
-            <span class="gazelle-categories__label">{{ block.settings.label }}</span>
+            <span class="gazelle-icon-row__label">{{ block.settings.label }}</span>
           </a>
         {% endif %}
       {% endfor %}
@@ -31,18 +69,18 @@
   </div>
 </section>
 
-<style>
-  .gazelle-categories {
+{% style %}
+  #gazelle-icon-row-{{ section.id }} {
     padding: 52px 24px;
     background: #ffffff;
   }
 
-  .gazelle-categories__inner {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__inner {
     max-width: 1200px;
     margin: 0 auto;
   }
 
-  .gazelle-categories__heading {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__heading {
     text-align: center;
     font-size: 1.75rem;
     font-style: italic;
@@ -51,14 +89,14 @@
     margin: 0 0 40px;
   }
 
-  .gazelle-categories__grid {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__grid {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 28px 20px;
   }
 
-  .gazelle-categories__item {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -68,7 +106,7 @@
     width: 100px;
   }
 
-  .gazelle-categories__circle {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle {
     width: 90px;
     height: 90px;
     border-radius: 50%;
@@ -77,20 +115,40 @@
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease, transform 0.2s ease;
+    /* Clips image artwork to the circle regardless of the source file's corners. */
+    overflow: hidden;
   }
 
-  .gazelle-categories__item:hover .gazelle-categories__circle {
+  /* The artwork is the circle — no grey plate behind it. */
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle.has-image {
+    background: transparent;
+  }
+
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item:hover .gazelle-icon-row__circle {
     background: #dde0e6;
     transform: scale(1.07);
   }
 
-  .gazelle-categories__emoji {
+  /* Keep image blocks from flashing a grey plate on hover. */
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item:hover .gazelle-icon-row__circle.has-image {
+    background: transparent;
+  }
+
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+  }
+
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__emoji {
     font-size: 2rem;
     line-height: 1;
     display: block;
   }
 
-  .gazelle-categories__label {
+  #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__label {
     font-size: 0.875rem;
     text-align: center;
     font-weight: 500;
@@ -98,18 +156,27 @@
     line-height: 1.3;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle {
+      transition: none;
+    }
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item:hover .gazelle-icon-row__circle {
+      transform: none;
+    }
+  }
+
   @media (max-width: 640px) {
-    .gazelle-categories {
+    #gazelle-icon-row-{{ section.id }} {
       padding: 36px 0;
     }
 
-    .gazelle-categories__heading {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__heading {
       padding: 0 16px;
       text-align: left;
       margin-bottom: 24px;
     }
 
-    .gazelle-categories__grid {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__grid {
       display: flex;
       flex-wrap: nowrap;
       justify-content: flex-start;
@@ -120,61 +187,66 @@
       padding: 0 16px 12px;
     }
 
-    .gazelle-categories__grid::-webkit-scrollbar {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__grid::-webkit-scrollbar {
       display: none;
     }
 
-    .gazelle-categories__item {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item {
       flex: 0 0 auto;
       width: 88px;
       padding: 0 8px;
     }
 
-    .gazelle-categories__circle {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle {
       width: 72px;
       height: 72px;
     }
 
-    .gazelle-categories__emoji {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__emoji {
       font-size: 1.6rem;
     }
 
-    .gazelle-categories__label {
+    #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__label {
       font-size: 0.8rem;
     }
   }
-</style>
+{% endstyle %}
 
 {% schema %}
 {
-  "name": "Category Icons",
+  "name": "Icon Row",
   "tag": "section",
-  "class": "gazelle-categories-section",
+  "class": "gazelle-icon-row-section",
   "settings": [
     {
       "type": "text",
       "id": "heading",
       "label": "Heading",
-      "default": "You Might Be Looking For..."
+      "info": "Optional. Leave empty for no heading."
     }
   ],
   "blocks": [
     {
       "type": "category",
-      "name": "Category",
+      "name": "Icon",
       "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Icon image (optional)",
+          "info": "Square image, 220 x 220px or larger (400px for retina). Fills the circle and is clipped to it. If empty, the emoji below is used."
+        },
         {
           "type": "text",
           "id": "emoji",
           "label": "Icon (emoji)",
           "default": "📚",
-          "info": "Paste any emoji here to use as the icon"
+          "info": "Only used when no icon image is set."
         },
         {
           "type": "text",
           "id": "label",
-          "label": "Label",
-          "default": "Category"
+          "label": "Label"
         },
         {
           "type": "url",
@@ -187,17 +259,11 @@
   ],
   "presets": [
     {
-      "name": "Category Icons",
+      "name": "Icon Row",
       "blocks": [
-        { "type": "category", "settings": { "emoji": "⭐", "label": "Bestsellers" } },
-        { "type": "category", "settings": { "emoji": "✨", "label": "New Books" } },
-        { "type": "category", "settings": { "emoji": "🕐", "label": "Coming Soon" } },
-        { "type": "category", "settings": { "emoji": "✒️", "label": "Signed" } },
-        { "type": "category", "settings": { "emoji": "📖", "label": "Fiction" } },
-        { "type": "category", "settings": { "emoji": "📰", "label": "Non-Fiction" } },
-        { "type": "category", "settings": { "emoji": "👦", "label": "Children's" } },
-        { "type": "category", "settings": { "emoji": "🎓", "label": "Teen & YA" } },
-        { "type": "category", "settings": { "emoji": "🎁", "label": "Gifts" } }
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" }
       ]
     }
   ],
