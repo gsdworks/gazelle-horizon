@@ -577,7 +577,7 @@ The guiding sequence, deliberately chosen so Billy can be signing off in paralle
 Rationale: visual sign-off is the unblocker. Get it in front of Billy so his review runs *while* Grant does data + feeds, instead of Billy waiting for everything to be perfect first.
 
 ### Environment / current state (as of 7 July evening)
-- **Working theme: "GSD Gazelle Build July 7th"** (#205873021277), created from local repo and **published live**. The old confusingly-named "dev theme 27-03" set was consolidated and deleted; **"Horizon"** (#199910359389) kept as a clean unmodified base reference. **Push target going forward = the GSD theme.**
+- **Working theme: "GSD Gazelle Build"** (#205873021277), created from local repo and **published live**. The old confusingly-named "dev theme 27-03" set was consolidated and deleted; **"Horizon"** (#199910359389) kept as a clean unmodified base reference. **Push target going forward = the GSD theme.**
 - **Repo:** `gsdworks/gazelle-horizon`, branch `main`. Local + GitHub in sync as of end of 7 July session.
 - **Tooling available in the strategy chat:** Gmail, Google Calendar, Google Drive connectors are live — **check decision status directly (Billy/Dave/Fred inbox) rather than asking Grant to recall.** Claude Code (Fable/Opus) + Shopify Dev MCP for the repo build.
 

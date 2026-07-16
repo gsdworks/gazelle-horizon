@@ -317,7 +317,7 @@ The loop: **symptom → read-only diagnostic ("report exact cause + minimal fix,
 - **Content/editor changes:** run `gazelle-pull` first to bring `templates/*.json` down, then commit. `templates/index.json` and the header/footer group JSON hold section placement + settings.
 - **End of every session (always):** `gazelle-pull` → commit (including JSON) → push origin. Treat this like hitting Save.
 - **Local dev:** `gazelle` alias runs `shopify theme dev`; preview at `http://127.0.0.1:9292`; press `e` in the terminal to open the theme editor.
-- **Push target:** "GSD Gazelle Build July 7th" (#205873021277), published live. "Horizon" (#199910359389) is a clean unmodified base reference — do not push to it.
+- **Push target:** "GSD Gazelle Build" (#205873021277), published live. "Horizon" (#199910359389) is a clean unmodified base reference — do not push to it.
 - **Previews for Billy:** `shopify theme push --unpublished --theme "dev theme DD-MM"` — ask Grant for the current date before naming it.
 - Repo: `github.com/gsdworks/gazelle-horizon`. Sync upstream `Shopify/horizon` periodically via GitHub's Sync fork button.
 
