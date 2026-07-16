@@ -15,19 +15,19 @@
         "slide_E4VCEJ": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+            "desktop_image": "shopify://shop_images/BroadviewPressBanner.png"
           }
         },
         "slide_gqWFVX": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+            "desktop_image": "shopify://shop_images/KodamaBanner.png"
           }
         },
         "slide_Kitenq": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/Hero_Banner_-_TEST.png"
+            "desktop_image": "shopify://shop_images/PMIBanner.png"
           }
         }
       },
@@ -47,7 +47,7 @@
         "category_HGVGRW": {
           "type": "category",
           "settings": {
-            "emoji": "⭐",
+            "emoji": "",
             "label": "Bestsellers",
             "link": ""
           }
@@ -139,19 +139,19 @@
         "panel_JDgq3k": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+            "desktop_image": "shopify://shop_images/DebrettsFocus_1.png"
           }
         },
         "panel_LNgVkj": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+            "desktop_image": "shopify://shop_images/MarianPressFocus_1.png"
           }
         },
         "panel_QzEqmj": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/Rectangular_Focus_-_TEST.png"
+            "desktop_image": "shopify://shop_images/RightBookFocus_1.png"
           }
         },
         "panel_XrYiK6": {
@@ -347,8 +347,8 @@
         "collection": "all",
         "layout_type": "carousel",
         "carousel_on_mobile": false,
-        "max_products": 8,
-        "columns": 4,
+        "max_products": 12,
+        "columns": 6,
         "mobile_columns": "2",
         "mobile_card_size": "60cqw",
         "columns_gap": 25,
@@ -357,7 +357,7 @@
         "icons_shape": "none",
         "section_width": "page-width",
         "horizontal_alignment": "flex-start",
-        "gap": 0,
+        "gap": 20,
         "color_scheme": "scheme-1",
         "padding-block-start": 48,
         "padding-block-end": 48
@@ -367,7 +367,7 @@
       "type": "gazelle-strip",
       "name": "Gazelle Strip",
       "settings": {
-        "desktop_image": "shopify://shop_images/Thin_Strip_-_TEST.png"
+        "desktop_image": "shopify://shop_images/MontagudThinBanner.png"
       }
     }
   },
