@@ -42,4 +42,27 @@
   body.page-width-narrow {
     --page-content-width: 1200px;
   }
+
+  /* Featured-collection carousel width fix.
+     product-list's carousel layout hard-codes the `force-full-width` class on its
+     wrapper (snippets/resource-list.liquid), so base.css's
+     `.section > .force-full-width { grid-column: 1 / -1 }` breaks the scroll track
+     out to full viewport width even when section_width is "page-width". This is
+     native Horizon behaviour, applied unconditionally for layout_type: carousel —
+     there is NO native setting to disable it (confirmed in the theme editor,
+     16 July 2026: page-width set, carousel still breaks out).
+
+     Fix: re-place the wrapper in the constrained centre column (grid-column: 2) so
+     the track respects the 1200px content box, and zero --util-page-margin-offset
+     on this subtree — it feeds the full-bleed first-slide inset (--gutter-slide-width)
+     and the arrow padding, both sized for a viewport-width track. The peek affordance
+     is untouched: it is reserved inside the slide-width calc via --peek-next-slide-size,
+     independent of container width.
+
+     Specificity 0,3,0 (.section-resource-list + .resource-list__carousel + .force-full-width)
+     beats core's 0,2,0 (.section > .force-full-width), so no !important is needed. */
+  .section-resource-list > .resource-list__carousel.force-full-width {
+    grid-column: 2;
+    --util-page-margin-offset: 0px;
+  }
 {% endstyle %}
