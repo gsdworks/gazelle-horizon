@@ -1,16 +1,26 @@
 {% comment %}
   Gazelle Hero Slideshow
 
-  Fixes 16 July:
-  1. Slides now accept an optional link (block.settings.url) — wraps the media in <a>.
-  2. Mobile image is now OPTIONAL and falls back to the desktop image. The desktop
-     image is only hidden on mobile when that slide actually HAS a mobile image
-     (per-slide `has-mobile` class). Previously the desktop image was hidden on
-     mobile unconditionally, so a slide with no mobile image rendered BLANK.
-  3. Adjacent-slide bleed fixed. `overflow: hidden` clips to the PADDING box, not
-     the content box — so the 20px horizontal padding on .gazelle-hero was a window
-     the neighbouring slides showed through. Clipping now happens on a separate
-     inner .gazelle-hero__viewport which carries no padding.
+  16 July:
+  1. Slides accept an optional link (block.settings.url) — wraps the media in <a>.
+  2. Mobile image is OPTIONAL and falls back to the desktop image. The desktop image
+     is only hidden on mobile when that slide HAS a mobile image (per-slide
+     `has-mobile` class). Previously desktop was hidden unconditionally, so a slide
+     with no mobile image rendered BLANK.
+  3. Adjacent-slide bleed fixed. `overflow: hidden` clips to the PADDING box, not the
+     content box — so the 20px horizontal padding on .gazelle-hero was a window the
+     neighbouring slides showed through. Clipping now happens on .gazelle-hero__viewport
+     which carries no padding.
+  4. Swipe / drag added (Pointer Events — one path for mouse, touch and trackpad).
+     - `touch-action: pan-y` keeps vertical page scroll working on mobile while
+       horizontal drags are captured by the slider.
+     - Drag does NOT wrap at the ends (rubber-banding past slide 1 or the last slide
+       would show empty space). Autoplay still wraps. Deliberate.
+     - ⚠️ Click suppression: because slides can be links, a drag would otherwise fire
+       the link on release. A capture-phase click handler swallows the click when the
+       pointer moved more than DRAG_CLICK_THRESHOLD px. A genuine tap still navigates.
+     - Images get draggable="false" — browsers native-drag images otherwise, which
+       fights the slider.
 {% endcomment %}
 
 <style>
@@ -26,11 +36,23 @@
      adjacent slides show through the padding strips. This element has no padding. */
   .gazelle-hero__viewport {
     overflow: hidden;
+    cursor: grab;
+    /* Allow vertical page scroll, capture horizontal for the slider. */
+    touch-action: pan-y;
+  }
+
+  .gazelle-hero__viewport.is-dragging {
+    cursor: grabbing;
   }
 
   .gazelle-hero__track {
     display: flex;
     transition: transform 0.6s ease;
+  }
+
+  /* Killed during a drag so the slide tracks the finger 1:1. */
+  .gazelle-hero__track.is-dragging {
+    transition: none;
   }
 
   .gazelle-hero__slide {
@@ -40,12 +62,15 @@
 
   .gazelle-hero__link {
     display: block;
+    -webkit-user-drag: none;
   }
 
   .gazelle-hero__slide img {
     width: 100%;
     height: auto;
     display: block;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .gazelle-hero__slide .mobile-image {
@@ -84,10 +109,16 @@
       display: block;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gazelle-hero__track {
+      transition: none;
+    }
+  }
 </style>
 
 <div class="gazelle-hero" id="gazelle-hero-{{ section.id }}">
-  <div class="gazelle-hero__viewport">
+  <div class="gazelle-hero__viewport" id="gazelle-hero-viewport-{{ section.id }}">
     <div class="gazelle-hero__track" id="gazelle-hero-track-{{ section.id }}">
       {% for block in section.blocks %}
         <div
@@ -110,6 +141,7 @@
                 alt="{{ block.settings.desktop_image.alt | escape }}"
                 width="{{ block.settings.desktop_image.width }}"
                 height="{{ block.settings.desktop_image.height }}"
+                draggable="false"
                 {% if forloop.first %}loading="eager"{% else %}loading="lazy"{% endif %}
               >
             {% else %}
@@ -125,6 +157,7 @@
                 alt="{{ block.settings.mobile_image.alt | escape }}"
                 width="{{ block.settings.mobile_image.width }}"
                 height="{{ block.settings.mobile_image.height }}"
+                draggable="false"
                 loading="lazy"
               >
             {% endif %}
@@ -152,6 +185,7 @@
   (function() {
     var sectionId = '{{ section.id }}';
     var hero = document.getElementById('gazelle-hero-' + sectionId);
+    var viewport = document.getElementById('gazelle-hero-viewport-' + sectionId);
     var track = document.getElementById('gazelle-hero-track-' + sectionId);
     var dotsContainer = document.getElementById('gazelle-hero-dots-' + sectionId);
     var dots = dotsContainer ? dotsContainer.querySelectorAll('.gazelle-hero__dot') : [];
@@ -159,6 +193,18 @@
     var currentIndex = 0;
     var autoplayDelay = {{ section.settings.autoplay_speed | times: 1000 }};
     var autoplayTimer;
+
+    // Fraction of slide width that must be dragged to advance. 0.15 = 15%.
+    var SWIPE_FRACTION = 0.15;
+    // Movement beyond this (px) counts as a drag, not a tap — used to swallow link clicks.
+    var DRAG_CLICK_THRESHOLD = 8;
+
+    var isDragging = false;
+    var hasDragged = false;
+    var startX = 0;
+    var startY = 0;
+    var deltaX = 0;
+    var lockedAxis = null; // 'x' | 'y' | null
 
     function goToSlide(index) {
       currentIndex = index;
@@ -174,6 +220,7 @@
 
     function startAutoplay() {
       if (totalSlides > 1) {
+        stopAutoplay();
         autoplayTimer = setInterval(nextSlide, autoplayDelay);
       }
     }
@@ -192,6 +239,111 @@
 
     hero.addEventListener('mouseenter', stopAutoplay);
     hero.addEventListener('mouseleave', startAutoplay);
+
+    // ---- Drag / swipe ----
+
+    if (totalSlides > 1) {
+
+      viewport.addEventListener('pointerdown', function(e) {
+        // Ignore right-click / middle-click.
+        if (e.button && e.button !== 0) return;
+        isDragging = true;
+        hasDragged = false;
+        lockedAxis = null;
+        startX = e.clientX;
+        startY = e.clientY;
+        deltaX = 0;
+        stopAutoplay();
+        track.classList.add('is-dragging');
+        viewport.classList.add('is-dragging');
+      });
+
+      viewport.addEventListener('pointermove', function(e) {
+        if (!isDragging) return;
+
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+
+        // Decide once whether this gesture is horizontal or vertical.
+        // If vertical, bail out so the page can scroll normally.
+        if (lockedAxis === null) {
+          if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+          lockedAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+          if (lockedAxis === 'y') {
+            isDragging = false;
+            track.classList.remove('is-dragging');
+            viewport.classList.remove('is-dragging');
+            goToSlide(currentIndex);
+            startAutoplay();
+            return;
+          }
+          // Now we own the gesture.
+          viewport.setPointerCapture(e.pointerId);
+        }
+
+        if (Math.abs(dx) > DRAG_CLICK_THRESHOLD) hasDragged = true;
+
+        // Resist dragging past the first / last slide.
+        if ((currentIndex === 0 && dx > 0) || (currentIndex === totalSlides - 1 && dx < 0)) {
+          dx = dx * 0.25;
+        }
+
+        deltaX = dx;
+        track.style.transform = 'translateX(calc(-' + (currentIndex * 100) + '% + ' + dx + 'px))';
+      });
+
+      function endDrag(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        track.classList.remove('is-dragging');
+        viewport.classList.remove('is-dragging');
+
+        if (viewport.hasPointerCapture && e.pointerId !== undefined) {
+          try { viewport.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        var threshold = viewport.offsetWidth * SWIPE_FRACTION;
+        var target = currentIndex;
+
+        if (deltaX < -threshold && currentIndex < totalSlides - 1) {
+          target = currentIndex + 1;
+        } else if (deltaX > threshold && currentIndex > 0) {
+          target = currentIndex - 1;
+        }
+
+        goToSlide(target);
+        deltaX = 0;
+        startAutoplay();
+      }
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+      viewport.addEventListener('pointerleave', endDrag);
+
+      // Swallow the click that follows a drag, so dragging a linked slide
+      // doesn't navigate. Capture phase, so it fires before the <a>.
+      viewport.addEventListener('click', function(e) {
+        if (hasDragged) {
+          e.preventDefault();
+          e.stopPropagation();
+          hasDragged = false;
+        }
+      }, true);
+
+      // Keyboard: arrow keys when the slider has focus.
+      viewport.setAttribute('tabindex', '0');
+      viewport.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' && currentIndex > 0) {
+          stopAutoplay();
+          goToSlide(currentIndex - 1);
+          startAutoplay();
+        } else if (e.key === 'ArrowRight' && currentIndex < totalSlides - 1) {
+          stopAutoplay();
+          goToSlide(currentIndex + 1);
+          startAutoplay();
+        }
+      });
+    }
 
     startAutoplay();
   })();
