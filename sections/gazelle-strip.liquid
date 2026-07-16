@@ -1,55 +1,120 @@
-{% comment %} Gazelle Thin Strip {% endcomment %}
+{% comment %}
+  Section: gazelle-strip.liquid
+  Display name: "Gazelle Strip"
 
-<style>
-  .gazelle-strip {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px 20px;
+  Single full-width image band (e.g. the Montagud publisher strip).
+
+  16 July changes:
+
+  1. NATIVE COLOUR SCHEME (`color_scheme` → `color-{{ scheme }}` class).
+     ⚠️ STRUCTURE CHANGED to make this work: .gazelle-strip was the max-width:1200px
+     element, so a background on it would only paint the centre column, not the full
+     band. Split into an outer full-bleed .gazelle-strip (carries the scheme class
+     and the background) and an inner .gazelle-strip__inner (max-width 1200px +
+     gutter). Same split as gazelle-focus and gazelle-hero.
+     Verified against the repo: Horizon 3.4 exposes --color-background,
+     --color-foreground and --color-border in assets/base.css. currentColor is used
+     in preference where possible — it needs no variable name at all.
+
+  2. ⚠️ MOBILE IMAGE FALLBACK — this was a live bug, the same one gazelle-hero and
+     gazelle-focus both had. `.desktop-image { display: none }` fired on mobile
+     unconditionally, while `mobile_image` is labelled optional. So the strip went
+     BLANK on phones whenever no mobile image was set. Now keyed to a `has-mobile`
+     class on the wrapper, so it falls back to the desktop image (scaled).
+
+  3. Padding is now a setting (was a hardcoded 20px) — it matters once the band has
+     a colour of its own.
+
+  4. width/height on <img> — stops layout shift and clears the theme-check offence.
+
+  5. Placeholder tinted from the scheme rather than a fixed #f0f0f0 grey, which
+     would have looked wrong on Scheme 5 Charcoal.
+
+  NOT ADDED (deliberate — not requested): a link setting. gazelle-hero and
+  gazelle-focus both take an optional `url` per block; this strip has no way to be
+  clickable. For a publisher banner that's probably wanted, but it's a scope call,
+  not a bug. Say the word and it's a three-line change.
+{% endcomment %}
+
+<div
+  class="gazelle-strip color-{{ section.settings.color_scheme }}"
+  id="gazelle-strip-{{ section.id }}"
+>
+  <div class="gazelle-strip__inner{% if section.settings.mobile_image != blank %} has-mobile{% endif %}">
+
+    {% if section.settings.desktop_image != blank %}
+      <img
+        class="desktop-image"
+        src="{{ section.settings.desktop_image | image_url: width: 1200 }}"
+        alt="{{ section.settings.desktop_image.alt | escape }}"
+        width="{{ section.settings.desktop_image.width }}"
+        height="{{ section.settings.desktop_image.height }}"
+        loading="lazy"
+      >
+    {% else %}
+      <div class="gazelle-strip__placeholder">
+        <span>Add a desktop image in the theme editor</span>
+      </div>
+    {% endif %}
+
+    {% if section.settings.mobile_image != blank %}
+      <img
+        class="mobile-image"
+        src="{{ section.settings.mobile_image | image_url: width: 600 }}"
+        alt="{{ section.settings.mobile_image.alt | escape }}"
+        width="{{ section.settings.mobile_image.width }}"
+        height="{{ section.settings.mobile_image.height }}"
+        loading="lazy"
+      >
+    {% endif %}
+
+  </div>
+</div>
+
+{% style %}
+  /* Outer band: full-bleed so the colour scheme paints edge to edge. */
+  #gazelle-strip-{{ section.id }} {
+    padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
   }
 
-  .gazelle-strip img {
+  #gazelle-strip-{{ section.id }} .gazelle-strip__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  #gazelle-strip-{{ section.id }} img {
     width: 100%;
     height: auto;
     display: block;
   }
 
-  .gazelle-strip .mobile-image {
+  #gazelle-strip-{{ section.id }} .mobile-image {
     display: none;
   }
 
+  /* Tinted from the scheme rather than a fixed grey. */
+  #gazelle-strip-{{ section.id }} .gazelle-strip__placeholder {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
   @media screen and (max-width: 768px) {
-    .gazelle-strip .desktop-image {
+    /* Only swap to the mobile image when one actually EXISTS.
+       Without the .has-mobile guard the desktop image was hidden unconditionally,
+       so a strip with no mobile image rendered blank. */
+    #gazelle-strip-{{ section.id }} .gazelle-strip__inner.has-mobile .desktop-image {
       display: none;
     }
-    .gazelle-strip .mobile-image {
+    #gazelle-strip-{{ section.id }} .gazelle-strip__inner.has-mobile .mobile-image {
       display: block;
     }
   }
-</style>
-
-<div class="gazelle-strip">
-  {% if section.settings.desktop_image != blank %}
-    <img
-      class="desktop-image"
-      src="{{ section.settings.desktop_image | image_url: width: 1200 }}"
-      alt="{{ section.settings.desktop_image.alt | escape }}"
-      loading="lazy"
-    >
-  {% else %}
-    <div style="background:#f0f0f0; height: 120px; display:flex; align-items:center; justify-content:center;">
-      <span style="color:#999;">Add a desktop image in the theme editor</span>
-    </div>
-  {% endif %}
-
-  {% if section.settings.mobile_image != blank %}
-    <img
-      class="mobile-image"
-      src="{{ section.settings.mobile_image | image_url: width: 600 }}"
-      alt="{{ section.settings.mobile_image.alt | escape }}"
-      loading="lazy"
-    >
-  {% endif %}
-</div>
+{% endstyle %}
 
 {% schema %}
 {
@@ -65,7 +130,39 @@
     {
       "type": "image_picker",
       "id": "mobile_image",
-      "label": "Mobile image (optional)"
+      "label": "Mobile image (optional)",
+      "info": "If empty, the desktop image is used on mobile."
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Colour scheme",
+      "default": "scheme-1",
+      "info": "Sets the band background behind and around the image."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 20
     }
   ],
   "presets": [

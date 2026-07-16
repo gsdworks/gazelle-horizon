@@ -14,26 +14,33 @@
   - Renamed "Category Icons" → "Icon Row" (no longer category-specific).
   - Icons can be IMAGES (PNG/SVG) as well as emoji. Image wins when set; emoji is
     the fallback. Per-block, so instances can mix.
-  - Image fills the circle (object-fit: cover) and is clipped by the circle's
-    border-radius + overflow:hidden, so artwork with square or white corners still
-    reads as a circle.
-  - Grey placeholder plate suppressed on image blocks (the artwork IS the circle);
-    still shown behind emoji blocks.
-  - CSS scoped to the section instance (#gazelle-icon-row-{{ section.id }}), so two
-    instances on one page can be styled independently without a selector collision.
+  - Image fills the circle (object-fit: cover), clipped by border-radius +
+    overflow:hidden, so artwork with square/white corners still reads as a circle.
+  - CSS scoped to #gazelle-icon-row-{{ section.id }} so two instances on one page
+    can be styled independently without a selector collision.
   - Heading default blank; preset lean (3 blocks); max_blocks 16.
-  - SEPARATE DESKTOP + MOBILE ICON SIZE (both section-level, so every icon in a
-    given row scales together — there is deliberately no per-block size).
-      * icon_size        60–280px, default 90  — applies above 640px
-      * icon_size_mobile 48–160px, default 72  — applies at/below 640px
-    Both feed the same --gz-icon-size custom property, redeclared inside the media
-    query. Everything derives from it: item width, gap (clamped), emoji size.
-    Previously mobile was auto-capped at min(desktop, 120px); that guessed for you
-    and is now replaced by an explicit control.
-    NOTE: there is deliberately NO "columns per row" setting. Size + wrap gives the
-    per-row count implicitly (e.g. 260px → 4 across in a 1200px row) and cannot
-    overflow. A columns setting would fight the size sliders.
-  - Links were already supported (block.settings.link) — unchanged.
+  - Separate desktop + mobile icon size, both section-level (every icon in a row
+    scales together — deliberately no per-block size). Both feed --gz-icon-size,
+    redeclared inside the media query. Gap, item width and emoji size all derive
+    from it. NOTE: deliberately NO "columns per row" setting — size + wrap gives the
+    per-row count implicitly (260px → 4 across in 1200px) and cannot overflow.
+
+  - NATIVE COLOUR SCHEME (`color_scheme` → `color-{{ scheme }}` class).
+    ⚠️ Replaces a hardcoded `background: #ffffff`, which is why this row rendered as
+    a white band against the Paper page and could never sit on Scheme 5 Charcoal.
+
+    ⚠️ The circle plate and label colours were also hardcoded (#eef0f3 plate,
+    #dde0e6 hover, #1a1a1a label) and would have been invisible or wrong on a dark
+    scheme. They now derive from the scheme:
+      - plate/hover use color-mix() against `currentColor`, so they're a tint of the
+        scheme's own foreground rather than a fixed grey.
+      - labels inherit `color` from the scheme class.
+    Verified against the repo: Horizon 3.4 exposes --color-background,
+    --color-foreground and --color-border in assets/base.css. currentColor is used
+    in preference anyway — it needs no variable name at all.
+
+    Image blocks keep a TRANSPARENT plate (the artwork IS the circle); only emoji
+    blocks show the tint.
 {% endcomment %}
 
 {%- liquid
@@ -42,7 +49,7 @@
 -%}
 
 <section
-  class="gazelle-icon-row"
+  class="gazelle-icon-row color-{{ section.settings.color_scheme }}"
   id="gazelle-icon-row-{{ section.id }}"
   {{ section.shopify_attributes }}
 >
@@ -89,8 +96,9 @@
   #gazelle-icon-row-{{ section.id }} {
     /* Single source of truth for this instance's sizing (desktop). */
     --gz-icon-size: {{ icon_size }}px;
-    padding: 52px 24px;
-    background: #ffffff;
+    /* Background + foreground come from the colour scheme class — no hardcoded
+       #ffffff. Everything below leans on currentColor so the chrome follows it. */
+    padding: {{ section.settings.padding_top }}px 24px {{ section.settings.padding_bottom }}px;
   }
 
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__inner {
@@ -103,7 +111,7 @@
     font-size: 1.75rem;
     font-style: italic;
     font-weight: 400;
-    color: #1a1a1a;
+    color: inherit;           /* follows the scheme */
     margin: 0 0 40px;
   }
 
@@ -131,7 +139,8 @@
     width: var(--gz-icon-size);
     height: var(--gz-icon-size);
     border-radius: 50%;
-    background: #eef0f3;
+    /* A tint of the scheme's own foreground, not a fixed grey. */
+    background: color-mix(in srgb, currentColor 8%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -141,17 +150,17 @@
     flex: 0 0 auto;
   }
 
-  /* The artwork is the circle — no grey plate behind it. */
+  /* The artwork is the circle — no plate behind it. */
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__circle.has-image {
     background: transparent;
   }
 
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item:hover .gazelle-icon-row__circle {
-    background: #dde0e6;
+    background: color-mix(in srgb, currentColor 16%, transparent);
     transform: scale(1.07);
   }
 
-  /* Keep image blocks from flashing a grey plate on hover. */
+  /* Keep image blocks from flashing a plate on hover. */
   #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__item:hover .gazelle-icon-row__circle.has-image {
     background: transparent;
   }
@@ -175,7 +184,7 @@
     font-size: 0.875rem;
     text-align: center;
     font-weight: 500;
-    color: #1a1a1a;
+    color: inherit;           /* follows the scheme */
     line-height: 1.3;
   }
 
@@ -190,9 +199,10 @@
 
   @media (max-width: 640px) {
     #gazelle-icon-row-{{ section.id }} {
-      /* Mobile size is now its own control, not derived from the desktop value. */
+      /* Mobile size is its own control, not derived from the desktop value. */
       --gz-icon-size: {{ icon_size_mobile }}px;
-      padding: 36px 0;
+      padding-left: 0;
+      padding-right: 0;
     }
 
     #gazelle-icon-row-{{ section.id }} .gazelle-icon-row__heading {
@@ -240,6 +250,13 @@
       "info": "Optional. Leave empty for no heading."
     },
     {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Colour scheme",
+      "default": "scheme-1",
+      "info": "Sets the band background, the labels, and the circle plate behind emoji icons."
+    },
+    {
       "type": "header",
       "content": "Icon size"
     },
@@ -264,6 +281,30 @@
       "unit": "px",
       "default": 72,
       "info": "Circle diameter at 640px and below. The row scrolls sideways on mobile, so larger sizes show fewer icons at once."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 52
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 52
     }
   ],
   "blocks": [

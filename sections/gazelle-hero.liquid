@@ -1,71 +1,160 @@
 {% comment %}
-  Gazelle Hero Slideshow
+  Section: gazelle-hero.liquid
+  Display name: "Gazelle Hero"
+
+  Full-width slideshow. Slides are optionally clickable and swipeable.
 
   16 July:
   1. Slides accept an optional link (block.settings.url) — wraps the media in <a>.
-  2. Mobile image is OPTIONAL and falls back to the desktop image. The desktop image
-     is only hidden on mobile when that slide HAS a mobile image (per-slide
-     `has-mobile` class). Previously desktop was hidden unconditionally, so a slide
-     with no mobile image rendered BLANK.
+  2. Mobile image is OPTIONAL and falls back to the desktop image, keyed to a
+     per-slide `has-mobile` class. Previously the desktop image was hidden on mobile
+     unconditionally, so a slide with no mobile image rendered BLANK.
   3. Adjacent-slide bleed fixed. `overflow: hidden` clips to the PADDING box, not the
      content box — so the 20px horizontal padding on .gazelle-hero was a window the
-     neighbouring slides showed through. Clipping now happens on .gazelle-hero__viewport
-     which carries no padding.
-  4. Swipe / drag added (Pointer Events — one path for mouse, touch and trackpad).
-     - `touch-action: pan-y` keeps vertical page scroll working on mobile while
-       horizontal drags are captured by the slider.
-     - Drag does NOT wrap at the ends (rubber-banding past slide 1 or the last slide
-       would show empty space). Autoplay still wraps. Deliberate.
-     - ⚠️ Click suppression: because slides can be links, a drag would otherwise fire
-       the link on release. A capture-phase click handler swallows the click when the
-       pointer moved more than DRAG_CLICK_THRESHOLD px. A genuine tap still navigates.
-     - Images get draggable="false" — browsers native-drag images otherwise, which
-       fights the slider.
+     neighbouring slides showed through. Clipping now happens on
+     .gazelle-hero__viewport, which carries no padding.
+  4. Swipe / drag (Pointer Events — one path for mouse, touch and trackpad), with
+     axis-locking, `touch-action: pan-y`, rubber-band at the ends, and capture-phase
+     click suppression so dragging a linked slide doesn't navigate.
+
+  5. NATIVE COLOUR SCHEME (`color_scheme` → `color-{{ scheme }}` class).
+     ⚠️ STRUCTURE CHANGED to make this work: .gazelle-hero was the max-width:1200px
+     element, so a background on it would only paint the centre column, not the full
+     band. Split into an outer full-bleed .gazelle-hero (carries the scheme class and
+     the background) and an inner .gazelle-hero__inner (max-width 1200px + gutter).
+
+     HONEST NOTE: a scheme does less here than elsewhere — the artwork covers most of
+     the band, so it only tints the 20px gutter and the dots row. Added for
+     consistency with the other sections at Grant's call, not because it's dramatic.
+
+     Dots were hardcoded #ccc / #222 and would have vanished on Scheme 5 Charcoal.
+     They now use `currentColor` + opacity, which the scheme class drives.
+
+  6. CSS scoped to #gazelle-hero-{{ section.id }} and moved into {% raw %}{% style %}{% endraw %}, matching
+     gazelle-focus and gazelle-categories. Lets a second hero instance be styled
+     independently and follows the repo convention.
 {% endcomment %}
 
-<style>
-  .gazelle-hero {
+<div
+  class="gazelle-hero color-{{ section.settings.color_scheme }}"
+  id="gazelle-hero-{{ section.id }}"
+>
+  <div class="gazelle-hero__inner">
+    <div class="gazelle-hero__viewport" id="gazelle-hero-viewport-{{ section.id }}">
+      <div class="gazelle-hero__track" id="gazelle-hero-track-{{ section.id }}">
+        {% for block in section.blocks %}
+          <div
+            class="gazelle-hero__slide{% if block.settings.mobile_image != blank %} has-mobile{% endif %}"
+            {{ block.shopify_attributes }}
+          >
+            {%- liquid
+              assign has_link = false
+              if block.settings.url != blank
+                assign has_link = true
+              endif
+            -%}
+
+            {% if has_link %}<a class="gazelle-hero__link" href="{{ block.settings.url }}">{% endif %}
+
+              {% if block.settings.desktop_image != blank %}
+                <img
+                  class="desktop-image"
+                  src="{{ block.settings.desktop_image | image_url: width: 1200 }}"
+                  alt="{{ block.settings.desktop_image.alt | escape }}"
+                  width="{{ block.settings.desktop_image.width }}"
+                  height="{{ block.settings.desktop_image.height }}"
+                  draggable="false"
+                  {% if forloop.first %}loading="eager"{% else %}loading="lazy"{% endif %}
+                >
+              {% else %}
+                <div class="gazelle-hero__placeholder">
+                  <span>Add a desktop image in the theme editor</span>
+                </div>
+              {% endif %}
+
+              {% if block.settings.mobile_image != blank %}
+                <img
+                  class="mobile-image"
+                  src="{{ block.settings.mobile_image | image_url: width: 800 }}"
+                  alt="{{ block.settings.mobile_image.alt | escape }}"
+                  width="{{ block.settings.mobile_image.width }}"
+                  height="{{ block.settings.mobile_image.height }}"
+                  draggable="false"
+                  loading="lazy"
+                >
+              {% endif %}
+
+            {% if has_link %}</a>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if section.blocks.size > 1 %}
+      <div class="gazelle-hero__dots" id="gazelle-hero-dots-{{ section.id }}">
+        {% for block in section.blocks %}
+          <button
+            class="gazelle-hero__dot {% if forloop.first %}is-active{% endif %}"
+            data-index="{{ forloop.index0 }}"
+            aria-label="Go to slide {{ forloop.index }}"
+            type="button"
+          ></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% style %}
+  /* Outer band: full-bleed so the colour scheme paints edge to edge.
+     The scheme class supplies background-color AND color; the dots below lean on
+     `currentColor` so they follow whichever scheme is picked. */
+  #gazelle-hero-{{ section.id }} {
+    padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
+  }
+
+  #gazelle-hero-{{ section.id }} .gazelle-hero__inner {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
     position: relative;
   }
 
-  /* Clipping lives here, NOT on .gazelle-hero.
+  /* Clipping lives here, NOT on the padded element.
      overflow clips to the padding box — putting it on a padded element lets
      adjacent slides show through the padding strips. This element has no padding. */
-  .gazelle-hero__viewport {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__viewport {
     overflow: hidden;
     cursor: grab;
     /* Allow vertical page scroll, capture horizontal for the slider. */
     touch-action: pan-y;
   }
 
-  .gazelle-hero__viewport.is-dragging {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__viewport.is-dragging {
     cursor: grabbing;
   }
 
-  .gazelle-hero__track {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__track {
     display: flex;
     transition: transform 0.6s ease;
   }
 
   /* Killed during a drag so the slide tracks the finger 1:1. */
-  .gazelle-hero__track.is-dragging {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__track.is-dragging {
     transition: none;
   }
 
-  .gazelle-hero__slide {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__slide {
     min-width: 100%;
     position: relative;
   }
 
-  .gazelle-hero__link {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__link {
     display: block;
     -webkit-user-drag: none;
   }
 
-  .gazelle-hero__slide img {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__slide img {
     width: 100%;
     height: auto;
     display: block;
@@ -73,113 +162,61 @@
     -webkit-user-drag: none;
   }
 
-  .gazelle-hero__slide .mobile-image {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__slide .mobile-image {
     display: none;
   }
 
-  .gazelle-hero__dots {
+  /* Empty-block placeholder, tinted from the scheme rather than a fixed grey. */
+  #gazelle-hero-{{ section.id }} .gazelle-hero__placeholder {
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  #gazelle-hero-{{ section.id }} .gazelle-hero__dots {
     display: flex;
     justify-content: center;
     gap: 8px;
     padding: 16px 0 8px;
   }
 
-  .gazelle-hero__dot {
+  #gazelle-hero-{{ section.id }} .gazelle-hero__dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #ccc;
+    /* currentColor + opacity, so dots read on Paper AND Charcoal. */
+    background: currentColor;
+    opacity: 0.28;
     border: none;
     cursor: pointer;
     padding: 0;
-    transition: background 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
-  .gazelle-hero__dot.is-active {
-    background: #222;
+  #gazelle-hero-{{ section.id }} .gazelle-hero__dot.is-active {
+    opacity: 1;
   }
 
   @media screen and (max-width: 768px) {
     /* Only swap to the mobile image on slides that HAVE one.
        Slides without a mobile image keep showing the desktop image (scaled). */
-    .gazelle-hero__slide.has-mobile .desktop-image {
+    #gazelle-hero-{{ section.id }} .gazelle-hero__slide.has-mobile .desktop-image {
       display: none;
     }
-    .gazelle-hero__slide.has-mobile .mobile-image {
+    #gazelle-hero-{{ section.id }} .gazelle-hero__slide.has-mobile .mobile-image {
       display: block;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .gazelle-hero__track {
+    #gazelle-hero-{{ section.id }} .gazelle-hero__track {
       transition: none;
     }
   }
-</style>
-
-<div class="gazelle-hero" id="gazelle-hero-{{ section.id }}">
-  <div class="gazelle-hero__viewport" id="gazelle-hero-viewport-{{ section.id }}">
-    <div class="gazelle-hero__track" id="gazelle-hero-track-{{ section.id }}">
-      {% for block in section.blocks %}
-        <div
-          class="gazelle-hero__slide{% if block.settings.mobile_image != blank %} has-mobile{% endif %}"
-          {{ block.shopify_attributes }}
-        >
-          {%- liquid
-            assign has_link = false
-            if block.settings.url != blank
-              assign has_link = true
-            endif
-          -%}
-
-          {% if has_link %}<a class="gazelle-hero__link" href="{{ block.settings.url }}">{% endif %}
-
-            {% if block.settings.desktop_image != blank %}
-              <img
-                class="desktop-image"
-                src="{{ block.settings.desktop_image | image_url: width: 1200 }}"
-                alt="{{ block.settings.desktop_image.alt | escape }}"
-                width="{{ block.settings.desktop_image.width }}"
-                height="{{ block.settings.desktop_image.height }}"
-                draggable="false"
-                {% if forloop.first %}loading="eager"{% else %}loading="lazy"{% endif %}
-              >
-            {% else %}
-              <div style="background:#f0f0f0; height: 400px; display:flex; align-items:center; justify-content:center;">
-                <span style="color:#999;">Add a desktop image in the theme editor</span>
-              </div>
-            {% endif %}
-
-            {% if block.settings.mobile_image != blank %}
-              <img
-                class="mobile-image"
-                src="{{ block.settings.mobile_image | image_url: width: 800 }}"
-                alt="{{ block.settings.mobile_image.alt | escape }}"
-                width="{{ block.settings.mobile_image.width }}"
-                height="{{ block.settings.mobile_image.height }}"
-                draggable="false"
-                loading="lazy"
-              >
-            {% endif %}
-
-          {% if has_link %}</a>{% endif %}
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  {% if section.blocks.size > 1 %}
-    <div class="gazelle-hero__dots" id="gazelle-hero-dots-{{ section.id }}">
-      {% for block in section.blocks %}
-        <button
-          class="gazelle-hero__dot {% if forloop.first %}is-active{% endif %}"
-          data-index="{{ forloop.index0 }}"
-          aria-label="Go to slide {{ forloop.index }}"
-        ></button>
-      {% endfor %}
-    </div>
-  {% endif %}
-</div>
+{% endstyle %}
 
 <script>
   (function() {
@@ -232,7 +269,7 @@
     dots.forEach(function(dot) {
       dot.addEventListener('click', function() {
         stopAutoplay();
-        goToSlide(parseInt(this.dataset.index));
+        goToSlide(parseInt(this.dataset.index, 10));
         startAutoplay();
       });
     });
@@ -356,6 +393,13 @@
   "class": "gazelle-hero-section",
   "settings": [
     {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Colour scheme",
+      "default": "scheme-1",
+      "info": "Sets the band background and the dot colours. The artwork covers most of the band, so this mainly affects the gutter and dots."
+    },
+    {
       "type": "range",
       "id": "autoplay_speed",
       "label": "Autoplay speed (seconds)",
@@ -363,6 +407,30 @@
       "max": 10,
       "step": 1,
       "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
     }
   ],
   "blocks": [
