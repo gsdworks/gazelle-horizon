@@ -13,87 +13,199 @@
      children relative to its own box, and that box moves with the transform. So
      nothing was clipped and the whole track slid out across the page.
      FIX: clipping now lives on a static .gazelle-focus__viewport wrapper; the track
-     transforms INSIDE it. Same class of bug as the hero's padding-box bleed, but
-     this one had no clipping at all.
+     transforms INSIDE it.
 
-  2. PAGING BY 3, NOT BY 1. goTo(currentIndex ± 1) stepped a single slide, so "next"
-     nudged the row instead of advancing to the next set. Now steps by the visible
-     count (3 desktop / 1 mobile) and clamps to the real scroll extent so the last
-     page can't overshoot into empty space.
+  2. PAGING BY 3, NOT BY 1. Now steps by the visible count (3 desktop / 1 mobile)
+     and clamps to the real scroll extent so the last page can't overshoot.
 
-  3. LINKS. New optional `url` per panel; wraps the media in <a> when set.
+  3. LINKS. Optional `url` per panel; wraps the media in <a> when set.
 
-  4. SWIPE / DRAG (Pointer Events — one path for mouse, touch, trackpad).
-     - `touch-action: pan-y` keeps vertical page scroll working.
-     - Axis-locked: the first ~5px decides horizontal (slider takes it) vs vertical
-       (page scrolls, slider releases).
-     - ⚠️ Click suppression: panels are links, so a drag would otherwise fire the
-       link on release. Capture-phase handler swallows the click past an 8px
-       threshold. A genuine tap still navigates.
-     - Rubber-bands at the ends rather than looping into empty space.
+  4. SWIPE / DRAG (Pointer Events — mouse, touch, trackpad in one path).
+     touch-action: pan-y; axis-locked; rubber-bands at the ends.
+     ⚠️ Capture-phase click suppression past 8px so dragging a linked panel doesn't
+     navigate. A genuine tap still does.
 
-  5. MOBILE IMAGE FALLBACK. `.desktop-image { display: none }` fired on mobile
-     unconditionally, so a panel with no mobile image rendered BLANK. Now keyed to a
-     per-panel `has-mobile` class.
+  5. MOBILE IMAGE FALLBACK via per-panel `has-mobile` class (was hiding the desktop
+     image unconditionally, so panels with no mobile image rendered BLANK).
 
-  6. Transition added to the track (paging was instant/janky — `scroll-behavior:
-     smooth` did nothing here because the track transforms, it doesn't scroll).
+  6. Transition on the track (paging was instant; `scroll-behavior: smooth` did
+     nothing because the track transforms, it doesn't scroll).
 
-  7. width/height on <img> — clears the logged theme-check offence and stops layout
-     shift.
+  7. width/height on <img> — clears the logged theme-check offence, stops CLS.
+
+  8. MOBILE DOTS as the swipe affordance (arrows are hidden on mobile). One dot per
+     panel — correct because mobile shows exactly one panel per page. Not shown on
+     desktop, where pages are ceil(n/3) and the arrows already do this job.
+
+  9. NATIVE COLOUR SCHEME (`color_scheme` setting → `color-{{ scheme }}` class).
+     ⚠️ STRUCTURE CHANGED to make this work: .gazelle-focus was the max-width:1200px
+     element, so a background on it would only paint the centre column, not the full
+     band. Split into an outer full-bleed .gazelle-focus (carries the scheme class
+     and the background) and an inner .gazelle-focus__inner (max-width 1200px).
+
+     ⚠️ Chrome/dots/arrows now derive from the scheme instead of hardcoded neutrals
+     (#fff / #222 / #ccc), which would have vanished on Scheme 5 Charcoal:
+       - arrow + dot colours use `currentColor`, which the scheme class sets. This
+         works regardless of Horizon's CSS variable NAMES — deliberate, because those
+         names are unverified here.
+       - the one place a var is genuinely needed (the arrow's own fill, so it reads
+         as a button floating on the band) uses var(--color-background, #ffffff).
+         VERIFY that name against the repo:
+           grep -roh '\--color-[a-z-]*' assets/base.css | sort -u
+         If Horizon 3.4 names it differently, swap it — the #ffffff fallback means a
+         wrong name degrades to the old white button rather than breaking.
 {% endcomment %}
 
 {%- liquid
   assign gap = 16
 -%}
 
-<style>
-  .gazelle-focus {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    position: relative;
+<div
+  class="gazelle-focus color-{{ section.settings.color_scheme }}"
+  id="gazelle-focus-{{ section.id }}"
+>
+  <div class="gazelle-focus__inner">
+    <div class="gazelle-focus__wrapper">
+
+      <button
+        class="gazelle-focus__arrow gazelle-focus__arrow--prev is-hidden"
+        id="gazelle-focus-prev-{{ section.id }}"
+        aria-label="Previous"
+        type="button"
+      >
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+
+      <div class="gazelle-focus__viewport" id="gazelle-focus-viewport-{{ section.id }}">
+        <div class="gazelle-focus__track" id="gazelle-focus-track-{{ section.id }}">
+          {% for block in section.blocks %}
+            <div
+              class="gazelle-focus__slide{% if block.settings.mobile_image != blank %} has-mobile{% endif %}"
+              {{ block.shopify_attributes }}
+            >
+              {%- liquid
+                assign has_link = false
+                if block.settings.url != blank
+                  assign has_link = true
+                endif
+              -%}
+
+              {% if has_link %}<a class="gazelle-focus__link" href="{{ block.settings.url }}">{% endif %}
+
+                {% if block.settings.desktop_image != blank %}
+                  <img
+                    class="desktop-image"
+                    src="{{ block.settings.desktop_image | image_url: width: 800 }}"
+                    alt="{{ block.settings.desktop_image.alt | escape }}"
+                    width="{{ block.settings.desktop_image.width }}"
+                    height="{{ block.settings.desktop_image.height }}"
+                    draggable="false"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div class="gazelle-focus__placeholder">
+                    <span>Add a desktop image</span>
+                  </div>
+                {% endif %}
+
+                {% if block.settings.mobile_image != blank %}
+                  <img
+                    class="mobile-image"
+                    src="{{ block.settings.mobile_image | image_url: width: 800 }}"
+                    alt="{{ block.settings.mobile_image.alt | escape }}"
+                    width="{{ block.settings.mobile_image.width }}"
+                    height="{{ block.settings.mobile_image.height }}"
+                    draggable="false"
+                    loading="lazy"
+                  >
+                {% endif %}
+
+              {% if has_link %}</a>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <button
+        class="gazelle-focus__arrow gazelle-focus__arrow--next"
+        id="gazelle-focus-next-{{ section.id }}"
+        aria-label="Next"
+        type="button"
+      >
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+
+    </div>
+
+    {% if section.blocks.size > 1 %}
+      <div class="gazelle-focus__dots" id="gazelle-focus-dots-{{ section.id }}">
+        {% for block in section.blocks %}
+          <button
+            class="gazelle-focus__dot {% if forloop.first %}is-active{% endif %}"
+            data-index="{{ forloop.index0 }}"
+            aria-label="Go to panel {{ forloop.index }}"
+            type="button"
+          ></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% style %}
+  /* Outer band: full-bleed so the colour scheme paints edge to edge.
+     The scheme class on this element supplies background-color AND color; every
+     rule below leans on `currentColor` rather than hardcoded neutrals so the
+     chrome follows whichever scheme is picked. */
+  #gazelle-focus-{{ section.id }} {
+    padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
   }
 
-  .gazelle-focus__wrapper {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  #gazelle-focus-{{ section.id }} .gazelle-focus__wrapper {
     position: relative;
   }
 
   /* Clipping lives HERE — a static element. Never put overflow:hidden on the
      element you transform; it moves with the transform and clips nothing. */
-  .gazelle-focus__viewport {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__viewport {
     overflow: hidden;
     cursor: grab;
     touch-action: pan-y;
   }
 
-  .gazelle-focus__viewport.is-dragging {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__viewport.is-dragging {
     cursor: grabbing;
   }
 
-  .gazelle-focus__track {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__track {
     display: flex;
     gap: {{ gap }}px;
     transition: transform 0.45s ease;
     will-change: transform;
   }
 
-  .gazelle-focus__track.is-dragging {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__track.is-dragging {
     transition: none;
   }
 
-  .gazelle-focus__slide {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__slide {
     /* 3 across, accounting for the 2 gaps between them. */
     flex: 0 0 calc((100% - {{ gap | times: 2 }}px) / 3);
     position: relative;
   }
 
-  .gazelle-focus__link {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__link {
     display: block;
     -webkit-user-drag: none;
   }
 
-  .gazelle-focus__slide img {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__slide img {
     width: 100%;
     height: auto;
     display: block;
@@ -101,16 +213,30 @@
     -webkit-user-drag: none;
   }
 
-  .gazelle-focus__slide .mobile-image {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__slide .mobile-image {
     display: none;
   }
 
-  .gazelle-focus__arrow {
+  /* Empty-block placeholder, tinted from the scheme rather than a fixed grey. */
+  #gazelle-focus-{{ section.id }} .gazelle-focus__placeholder {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    color: color-mix(in srgb, currentColor 55%, transparent);
+    font-size: 14px;
+  }
+
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: white;
-    border: 1px solid #ddd;
+    /* The one place a scheme variable is genuinely needed — see header comment.
+       Falls back to white if Horizon names it something else. */
+    background: var(--color-background, #ffffff);
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    color: inherit;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -124,121 +250,76 @@
     padding: 0;
   }
 
-  .gazelle-focus__arrow:hover {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   }
 
-  .gazelle-focus__arrow--prev { left: -20px; }
-  .gazelle-focus__arrow--next { right: -20px; }
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow--prev { left: -20px; }
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow--next { right: -20px; }
 
-  .gazelle-focus__arrow svg {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow svg {
     width: 16px;
     height: 16px;
-    stroke: #222;
+    stroke: currentColor;   /* follows the scheme's foreground */
     fill: none;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
 
-  .gazelle-focus__arrow.is-hidden {
+  #gazelle-focus-{{ section.id }} .gazelle-focus__arrow.is-hidden {
     opacity: 0;
     pointer-events: none;
   }
 
+  /* Dots: mobile-only swipe affordance. Hidden on desktop, where the page count is
+     ceil(n/3) rather than n, and the arrows already indicate more content. */
+  #gazelle-focus-{{ section.id }} .gazelle-focus__dots {
+    display: none;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0 4px;
+  }
+
+  #gazelle-focus-{{ section.id }} .gazelle-focus__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    /* currentColor + opacity, so dots read correctly on Paper AND Charcoal. */
+    background: currentColor;
+    opacity: 0.28;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #gazelle-focus-{{ section.id }} .gazelle-focus__dot.is-active {
+    opacity: 1;
+  }
+
   @media screen and (max-width: 768px) {
-    .gazelle-focus__slide {
+    #gazelle-focus-{{ section.id }} .gazelle-focus__slide {
       /* One full panel per view; swipe for the next. */
       flex: 0 0 100%;
     }
 
     /* Only swap to the mobile image on panels that HAVE one.
        Panels without one keep showing the desktop image, scaled. */
-    .gazelle-focus__slide.has-mobile .desktop-image { display: none; }
-    .gazelle-focus__slide.has-mobile .mobile-image { display: block; }
+    #gazelle-focus-{{ section.id }} .gazelle-focus__slide.has-mobile .desktop-image { display: none; }
+    #gazelle-focus-{{ section.id }} .gazelle-focus__slide.has-mobile .mobile-image { display: block; }
 
     /* Arrows are redundant once you can swipe, and they'd cover the artwork. */
-    .gazelle-focus__arrow { display: none; }
+    #gazelle-focus-{{ section.id }} .gazelle-focus__arrow { display: none; }
+
+    /* ...so the dots take over as the "there's more, swipe" cue. */
+    #gazelle-focus-{{ section.id }} .gazelle-focus__dots { display: flex; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .gazelle-focus__track { transition: none; }
+    #gazelle-focus-{{ section.id }} .gazelle-focus__track { transition: none; }
   }
-</style>
-
-<div class="gazelle-focus" id="gazelle-focus-{{ section.id }}">
-  <div class="gazelle-focus__wrapper">
-
-    <button
-      class="gazelle-focus__arrow gazelle-focus__arrow--prev is-hidden"
-      id="gazelle-focus-prev-{{ section.id }}"
-      aria-label="Previous"
-      type="button"
-    >
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-
-    <div class="gazelle-focus__viewport" id="gazelle-focus-viewport-{{ section.id }}">
-      <div class="gazelle-focus__track" id="gazelle-focus-track-{{ section.id }}">
-        {% for block in section.blocks %}
-          <div
-            class="gazelle-focus__slide{% if block.settings.mobile_image != blank %} has-mobile{% endif %}"
-            {{ block.shopify_attributes }}
-          >
-            {%- liquid
-              assign has_link = false
-              if block.settings.url != blank
-                assign has_link = true
-              endif
-            -%}
-
-            {% if has_link %}<a class="gazelle-focus__link" href="{{ block.settings.url }}">{% endif %}
-
-              {% if block.settings.desktop_image != blank %}
-                <img
-                  class="desktop-image"
-                  src="{{ block.settings.desktop_image | image_url: width: 800 }}"
-                  alt="{{ block.settings.desktop_image.alt | escape }}"
-                  width="{{ block.settings.desktop_image.width }}"
-                  height="{{ block.settings.desktop_image.height }}"
-                  draggable="false"
-                  loading="lazy"
-                >
-              {% else %}
-                <div style="background:#f0f0f0; aspect-ratio: 4/3; display:flex; align-items:center; justify-content:center;">
-                  <span style="color:#999; font-size:14px;">Add a desktop image</span>
-                </div>
-              {% endif %}
-
-              {% if block.settings.mobile_image != blank %}
-                <img
-                  class="mobile-image"
-                  src="{{ block.settings.mobile_image | image_url: width: 800 }}"
-                  alt="{{ block.settings.mobile_image.alt | escape }}"
-                  width="{{ block.settings.mobile_image.width }}"
-                  height="{{ block.settings.mobile_image.height }}"
-                  draggable="false"
-                  loading="lazy"
-                >
-              {% endif %}
-
-            {% if has_link %}</a>{% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <button
-      class="gazelle-focus__arrow gazelle-focus__arrow--next"
-      id="gazelle-focus-next-{{ section.id }}"
-      aria-label="Next"
-      type="button"
-    >
-      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-    </button>
-
-  </div>
-</div>
+{% endstyle %}
 
 <script>
   (function() {
@@ -247,9 +328,11 @@
     var track = document.getElementById('gazelle-focus-track-' + sectionId);
     var prevBtn = document.getElementById('gazelle-focus-prev-' + sectionId);
     var nextBtn = document.getElementById('gazelle-focus-next-' + sectionId);
+    var dotsContainer = document.getElementById('gazelle-focus-dots-' + sectionId);
     if (!track) return;
 
     var slides = track.querySelectorAll('.gazelle-focus__slide');
+    var dots = dotsContainer ? dotsContainer.querySelectorAll('.gazelle-focus__dot') : [];
     var totalSlides = slides.length;
     var GAP = {{ gap }};
     var page = 0;
@@ -276,14 +359,28 @@
       nextBtn.classList.toggle('is-hidden', page >= totalPages() - 1 || totalSlides <= visibleCount());
     }
 
+    function updateDots() {
+      // Dots are mobile-only, where page index === panel index (1 per view).
+      dots.forEach(function(dot, i) {
+        dot.classList.toggle('is-active', i === page);
+      });
+    }
+
     function goToPage(p) {
       page = Math.max(0, Math.min(p, totalPages() - 1));
       track.style.transform = 'translateX(-' + offsetForPage(page) + 'px)';
       updateArrows();
+      updateDots();
     }
 
     if (prevBtn) prevBtn.addEventListener('click', function() { goToPage(page - 1); });
     if (nextBtn) nextBtn.addEventListener('click', function() { goToPage(page + 1); });
+
+    dots.forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        goToPage(parseInt(this.dataset.index, 10));
+      });
+    });
 
     // Re-clamp on resize / breakpoint change: 3-up and 1-up have different page counts.
     var resizeTimer;
@@ -377,6 +474,7 @@
     });
 
     updateArrows();
+    updateDots();
   })();
 </script>
 
@@ -385,7 +483,39 @@
   "name": "Gazelle Focus",
   "tag": "section",
   "class": "gazelle-focus-section",
-  "settings": [],
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Colour scheme",
+      "default": "scheme-1",
+      "info": "Sets the band background and the arrow / dot colours."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 20
+    }
+  ],
   "blocks": [
     {
       "type": "panel",
