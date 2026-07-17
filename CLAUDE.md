@@ -1,6 +1,6 @@
 # CLAUDE.md — Gazelle Books Shopify Theme
 
-_Last updated: 16 July 2026_
+_Last updated: 17 July 2026_
 
 This file is read at the start of every session. It defines how to work in this repo. Read it before touching any file.
 
@@ -15,9 +15,10 @@ Product data is pushed into Shopify from **BooksoniX** via an event-driven REST 
 **`gazelle-context-working.md` (repo root) is the master source of truth** for this project — decisions, state, open items, hard-won lessons. This file (CLAUDE.md) is the operating manual; that file is the record.
 
 - **The repo copy is canonical.** Any copy in Claude project knowledge is a convenience snapshot and **may be stale — never edit from it.**
+- **⚠️ SINGLE-WRITER RULE — `gazelle-context-working.md` is edited ONLY here, on disk, by Claude Code, and committed in the same session as the edit.** Never hand the user a full-file copy to move by hand — that produced 19 divergent copies in Downloads and let the repo go stale 3 hours after it became canonical (16 July 12:16 → 15:17). Strategy chats supply `str_replace` operations as text; they do not emit the file. **In the repo ≠ committed.**
 - **Read it before any non-trivial task.** It records why things are the way they are, and what has already been decided and must not be silently reversed.
 - Edits are **surgical (`str_replace`), additive, never overwrite confirmed decisions**, and always update the `_Last updated:_` line.
-- **⚠️ Verify currency by CONTENT, not date.** Two sessions ran on 14 July producing two different "14 July" files (960 and 985 lines) — a correct-looking date proves nothing. **Grep for the newest artefact you know exists on disk** (e.g. `grep -c gazelle-layout gazelle-context-working.md`). A master file that doesn't know about a snippet sitting in this repo cannot be current.
+- **⚠️ Currency is a git question now, not a grep question.** This file is the only copy. It is stale only if a session edited it without committing. Check `git log -1 --format=%ad -- gazelle-context-working.md`. _(Superseded 17 July: the old rule was to grep for a known artefact, necessary when 19 divergent copies existed. They're gone.)_
 
 ## Build philosophy — NATIVE-FIRST (governs every decision)
 
