@@ -18,7 +18,7 @@ Product data is pushed into Shopify from **BooksoniX** via an event-driven REST 
 - **⚠️ SINGLE-WRITER RULE — `gazelle-context-working.md` is edited ONLY here, on disk, by Claude Code, and committed in the same session as the edit.** Never hand the user a full-file copy to move by hand — that produced 19 divergent copies in Downloads and let the repo go stale 3 hours after it became canonical (16 July 12:16 → 15:17). Strategy chats supply `str_replace` operations as text; they do not emit the file. **In the repo ≠ committed.**
 - **Read it before any non-trivial task.** It records why things are the way they are, and what has already been decided and must not be silently reversed.
 - Edits are **surgical (`str_replace`), additive, never overwrite confirmed decisions**, and always update the `_Last updated:_` line.
-- **⚠️ Currency is a git question now, not a grep question.** This file is the only copy. It is stale only if a session edited it without committing. Check `git log -1 --format=%ad -- gazelle-context-working.md`. _(Superseded 17 July: the old rule was to grep for a known artefact, necessary when 19 divergent copies existed. They're gone.)_
+- **⚠️ Currency is a git question now, not a grep question.** This file is the only copy. It is stale only if a session edited it without committing. Check `git log -1 --format=%ad -- gazelle-context-working.md`.
 
 ## Build philosophy — NATIVE-FIRST (governs every decision)
 
