@@ -49,6 +49,7 @@ Update gazelle-context-working.md per the HOW TO UPDATE protocol at the top. Fol
 - **Stock header, byte-exact, NO space after the comma:** `"Variant Barcode [ID]","Inventory Available: Gazelle Warehouse"`
 - **`[ID]` suffix** on a Matrixify column header = **forced match on that field**.
 - **Tracking constants on every row:** `Command=UPDATE` and `Line: Type=Fulfillment Line`; **filename MUST contain "Orders"** or the unattended import stalls on entity selection.
+- **Tracking file, LOCKED 8-col format:** `Command`, `Name`, `Line: Type`, `Line: Variant Barcode`, `Fulfillment: Tracking Company`, `Fulfillment: Tracking Number`, `Fulfillment: Tracking URL`, `Fulfillment: Send Receipt`.
 - **SFTP:** `ftp.gazellebookservices.co.uk:22`, user `Shopify`. The `/Stock` fixed-name file is MISSPELLED **`GazelleAvailabilty.csv`** (build against the typo); also `/Orders`, `/Tracking`.
 - **Order ID prefix `GZ`** — Settings > General (**NOT** Checkout).
 - **Matrixify results file echoes your input;** a green **"OK" is NOT a verified write** — confirm against a Shopify store export.
