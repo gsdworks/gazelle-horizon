@@ -16,7 +16,11 @@ _This block is the machine that keeps this file honest. Five sections: the updat
 
 ### Section 1 — HOW TO UPDATE THIS FILE (standing protocol)
 
-**⚠️ This is the ONLY method for updating this file, and every update is ADDITIVE — never edit or delete an existing note or a confirmed decision. New knowledge is prepended/inserted; old knowledge stays as the chain of record.**
+**⚠️ This is the ONLY method for updating this file. The file has TWO kinds of content and they are maintained in OPPOSITE ways — do not apply one rule to the other:**
+- **HISTORY — the dated notes and the `_Last updated:_` chain. ADDITIVE, always.** Never edit or delete an existing note or a confirmed decision. New knowledge is prepended/inserted; old knowledge stays as the chain of record. **These are the only parts that GROW.**
+- **LIVE STATE — the OPERATING BLOCK's Sections 2 (shortcuts), 3 (open loops) and 4 (traps). MAINTAINED BY REPLACEMENT.** These record what is true NOW, so reconciliation **edits the existing line in place (`str_replace`) and never appends a duplicate** — see step 2. A superseded loop or shortcut is struck or rewritten, not left standing beside its replacement.
+
+**Getting this backwards is a known near-miss (21 Jul): the blanket "every update is ADDITIVE" was read as "append", which would have left ten open loops where five belong.**
 
 **Grant runs this EVERY time, verbatim.**
 
