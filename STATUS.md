@@ -5,7 +5,7 @@ _Updated: 2026-07-30_
 
 ## Blocking go-live
 - **DAVE — full catalogue load.** Store holds ~1,800 of ~54,500 titles (~3%). Event-driven integration only creates a product when a BooksoniX record changes, so the catalogue trickles in ~40–50/day. The full bulk load has never run; the force-update mechanism across the whole catalogue reportedly crashes BooksoniX. **This is the true go-live gate.** Next: once the re-push below is verified, ask Dave (Billy cc) for the plan + timeline on the full load.
-- **DAVE — metafield re-push (in flight).** Root cause of the failed force-update found and fixed 30 Jul: 3 definitions were multi-line, blocking Dave's single-line writes. Now aligned. **Emailed Dave to re-run the update push.** Next: on his re-push, pull a fresh export and verify — the ~523 has-type/zero-metafield products should collapse; `%sh_height_mm%` count (895) should hold, not climb.
+- **DAVE — metafield re-push (in flight).** Definitions fixed 30 Jul (3 multi-line definitions were blocking Dave's single-line writes; all 23 now match his payload). **Email sent 30 Jul — awaiting his re-push.** Next: on arrival, pull a fresh export and verify the ~523 has-type/zero-metafield products collapse, and the `%sh_height_mm%` count (895) holds, not climbs.
 
 ## Open loops
 - **DAVE — series field is junk.** `custom.series` comes through as internal tokens (`__line:the_frean_chronicles`) on all 385 products that have one, not the series name. Raised with Dave 30 Jul in the re-push email. Awaiting fix.
@@ -17,6 +17,7 @@ _Updated: 2026-07-30_
 - **OURS — paid Matrixify tier.** Demo won't run production. Blocked on Fred's delta answer.
 - **OURS — send-receipt flip.** Billy wants send-receipt TRUE. Hold FALSE until launch, then verify one-email-per-parcel with notifications on before flipping. Not started.
 - **OURS — barcode-uniqueness store audit** before go-live. Source confirmed single across 54,517 rows (Lee removed fudged `9781909360266`); store-side audit still to run.
+- **OURS — metafield type migration (deferred, not blocking now).** Minimal confirmed list: `publication_date` → Date (blocks the New-Release rule), plus `author`, `thema_subjects`, `bic_subjects`, `bisac_subjects`, `main_subjects` → list types (blocks native S&D subject filtering). Nothing else needs to move. Tool is built and committed (`update_gazelle_metafield_types.py`, never run). TRAP: pipes occur inside legitimate content — any list-splitting must be per-field, never blanket.
 
 ## Front-end open items (yours alone, cheap — good filler between Dave rounds)
 - Nav "Catagories" typo in placeholder menu — must not ship. Admin → Navigation job.
@@ -24,9 +25,11 @@ _Updated: 2026-07-30_
 - Nav taxonomy proposal to Billy — gated on subject-distribution analysis.
 
 ## This week (system-critical)
-- **OURS — fix git push from CLI.** HTTPS push fails (GitHub killed password auth); GitHub Desktop still works. Switch remote to SSH or store a PAT in keychain. The /update-context loop depends on push working. Not started.
+- **OURS — verify the `@docs/build-manual.md` import loads** in a fresh Claude Code session (ask it a manual rule, e.g. pull-clobber). Neither the import nor `/update-context` was active in the session that built them.
+- **OURS — monolith carve into `docs/`.** Carve the detail sections of `gazelle-context-working.md` into `docs/*.md`, then retire it. Quiet-afternoon job.
 
 ## Housekeeping
 - `custom.format` and `custom.genre` — 2 products each, undefined keys not in the 23-field contract. Unexplained. Investigate/clean when convenient.
 - Next product export MUST include the Tags column (didn't export last time — 0/1,734 rows read as "untagged" when coverage was unreadable).
-- Context system restructure: STATUS/DONE/digest-protocol now live. Claude.ai side = drag PROJECT-CONTEXT.md after each /update-context (GitHub Sync-now connector confirmed unreliable mid-2026 — do not rely on it). Optional later: trial Basic Memory Cloud (~£10/mo, 7-day trial) if the drag keeps getting forgotten. Pending: carve monolith into docs/*.md on a quiet afternoon, then retire it.
+- BooksoniX Integration app client secret may have been rotated by Dave — UNVERIFIED. The 400 `application_cannot_be_found` came from placeholder creds, not a rotation test. Confirm before the type migration needs API access.
+- Context system restructure: STATUS/DONE/digest-protocol now live. Claude.ai side = drag PROJECT-CONTEXT.md after each `/update-context` (GitHub Sync-now connector confirmed unreliable mid-2026 — do not rely on it). Optional later: trial Basic Memory Cloud (~£10/mo, 7-day trial) if the drag keeps getting forgotten.

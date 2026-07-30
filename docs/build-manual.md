@@ -143,6 +143,7 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 **Known source-data bugs (Dave's side — do NOT work around them in Liquid):**
 - `width_mm` / `height_mm` land as literal `%sh_width_mm%` placeholder tokens. **The dimensions row is deliberately un-guarded so this shows live** — it's evidence for Dave and proof the front end works. Leave it.
 - `main_subjects` duplicates `&`/`and` label variants.
+- `series` arrives as an internal token (`__line:the_frean_chronicles`), not the series name, on all 385 products that have one. Raised with Dave 30 July. Do not parse the token in Liquid — it self-heals when he fixes the source.
 - `thema_subjects` / `bic_subjects` currently carry **decoded names, not raw codes**. Front end is already wired correctly and self-heals when Dave switches the source.
 
 **`custom.pubcode` does not exist yet.** PUBCODE is currently only a substring inside `tags_global` (`PUBCODE: CE1 - LINDEN PUBLISHING INC`). Do not build anything that depends on a discrete pubcode metafield.
