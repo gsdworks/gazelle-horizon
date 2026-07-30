@@ -15,19 +15,22 @@
         "slide_E4VCEJ": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/BroadviewPressBanner.png"
+            "desktop_image": "shopify://shop_images/BroadviewPressBanner.png",
+            "url": ""
           }
         },
         "slide_gqWFVX": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/KodamaBanner.png"
+            "desktop_image": "shopify://shop_images/KodamaBanner.png",
+            "url": ""
           }
         },
         "slide_Kitenq": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/PMIBanner.png"
+            "desktop_image": "shopify://shop_images/PMIBanner.png",
+            "url": ""
           }
         }
       },
@@ -38,79 +41,82 @@
       ],
       "name": "Gazelle Hero",
       "settings": {
-        "autoplay_speed": 5
+        "color_scheme": "scheme-6",
+        "autoplay_speed": 5,
+        "padding_top": 0,
+        "padding_bottom": 0
       }
     },
     "gazelle_categories_Tx8ULP": {
       "type": "gazelle-categories",
       "blocks": {
-        "category_HGVGRW": {
+        "category_X8gEM9": {
           "type": "category",
           "settings": {
+            "image": "shopify://shop_images/bestsellers.png",
             "emoji": "",
             "label": "Bestsellers",
             "link": ""
           }
         },
-        "category_QzgTYN": {
+        "category_HGVGRW": {
           "type": "category",
           "settings": {
-            "emoji": "✨",
+            "image": "shopify://shop_images/new-books.png",
+            "emoji": "",
             "label": "New Books",
-            "link": ""
-          }
-        },
-        "category_X8gEM9": {
-          "type": "category",
-          "settings": {
-            "emoji": "🕐",
-            "label": "Coming Soon",
             "link": ""
           }
         },
         "category_TrDbdU": {
           "type": "category",
           "settings": {
-            "emoji": "✒️",
-            "label": "Signed",
+            "image": "shopify://shop_images/fiction.png",
+            "emoji": "",
+            "label": "Fiction",
+            "link": ""
+          }
+        },
+        "category_QzgTYN": {
+          "type": "category",
+          "settings": {
+            "image": "shopify://shop_images/non-fiction.png",
+            "emoji": "",
+            "label": "Non-Fiction",
             "link": ""
           }
         },
         "category_JGMPGn": {
           "type": "category",
           "settings": {
-            "emoji": "📖",
-            "label": "Fiction",
-            "link": ""
-          }
-        },
-        "category_bM9Cgi": {
-          "type": "category",
-          "settings": {
-            "emoji": "📰",
-            "label": "Non-Fiction",
+            "image": "shopify://shop_images/childrens.png",
+            "emoji": "",
+            "label": "Childrens",
             "link": ""
           }
         },
         "category_ri4Mm3": {
           "type": "category",
           "settings": {
-            "emoji": "👦",
-            "label": "Children's",
+            "image": "shopify://shop_images/teen-ya.png",
+            "emoji": "",
+            "label": "Teen & YA",
             "link": ""
           }
         },
-        "category_AHgUFJ": {
+        "category_bM9Cgi": {
           "type": "category",
           "settings": {
-            "emoji": "🎓",
-            "label": "Teen & YA",
+            "image": "shopify://shop_images/special-offers.png",
+            "emoji": "",
+            "label": "Special Offers",
             "link": ""
           }
         },
         "category_MRfLm4": {
           "type": "category",
           "settings": {
+            "image": "shopify://shop_images/gifts.png",
             "emoji": "🎁",
             "label": "Gifts",
             "link": ""
@@ -118,19 +124,23 @@
         }
       },
       "block_order": [
-        "category_HGVGRW",
-        "category_QzgTYN",
         "category_X8gEM9",
+        "category_HGVGRW",
         "category_TrDbdU",
+        "category_QzgTYN",
         "category_JGMPGn",
-        "category_bM9Cgi",
         "category_ri4Mm3",
-        "category_AHgUFJ",
+        "category_bM9Cgi",
         "category_MRfLm4"
       ],
       "name": "Category Icons",
       "settings": {
-        "heading": "You Might Be Looking For..."
+        "heading": "You might be looking for",
+        "color_scheme": "scheme-6",
+        "icon_size": 90,
+        "icon_size_mobile": 72,
+        "padding_top": 52,
+        "padding_bottom": 52
       }
     },
     "gazelle_focus_MM7NL8": {
@@ -139,34 +149,116 @@
         "panel_JDgq3k": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/DebrettsFocus_1.png"
+            "desktop_image": "shopify://shop_images/DebrettsFocus_1.png",
+            "url": ""
           }
         },
         "panel_LNgVkj": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/MarianPressFocus_1.png"
+            "desktop_image": "shopify://shop_images/MarianPressFocus_1.png",
+            "url": ""
           }
         },
         "panel_QzEqmj": {
           "type": "panel",
           "settings": {
-            "desktop_image": "shopify://shop_images/RightBookFocus_1.png"
+            "desktop_image": "shopify://shop_images/RightBookFocus_1.png",
+            "url": ""
           }
         },
-        "panel_XrYiK6": {
+        "panel_WENC86": {
           "type": "panel",
-          "settings": {}
+          "settings": {
+            "desktop_image": "shopify://shop_images/DebrettsFocus_1.png",
+            "url": ""
+          }
+        },
+        "panel_hxx6rQ": {
+          "type": "panel",
+          "settings": {
+            "desktop_image": "shopify://shop_images/MarianPressFocus_1.png",
+            "url": ""
+          }
+        },
+        "panel_AGd4Hp": {
+          "type": "panel",
+          "settings": {
+            "desktop_image": "shopify://shop_images/RightBookFocus_1.png",
+            "url": ""
+          }
         }
       },
       "block_order": [
         "panel_JDgq3k",
         "panel_LNgVkj",
         "panel_QzEqmj",
-        "panel_XrYiK6"
+        "panel_WENC86",
+        "panel_hxx6rQ",
+        "panel_AGd4Hp"
       ],
       "name": "Gazelle Focus",
-      "settings": {}
+      "settings": {
+        "color_scheme": "scheme-6",
+        "padding_top": 20,
+        "padding_bottom": 20
+      }
+    },
+    "gazelle_categories_p4pAFn": {
+      "type": "gazelle-categories",
+      "blocks": {
+        "category_wRLgga": {
+          "type": "category",
+          "settings": {
+            "image": "shopify://shop_images/LiteraryMapsHighlight_1.png",
+            "emoji": "📚",
+            "label": "",
+            "link": ""
+          }
+        },
+        "category_VQCWzi": {
+          "type": "category",
+          "settings": {
+            "image": "shopify://shop_images/CrossbillHighlight_1.png",
+            "emoji": "",
+            "label": "",
+            "link": ""
+          }
+        },
+        "category_PPBAXg": {
+          "type": "category",
+          "settings": {
+            "image": "shopify://shop_images/HackettHighlight_1.png",
+            "emoji": "",
+            "label": "",
+            "link": ""
+          }
+        },
+        "category_4R9xUf": {
+          "type": "category",
+          "settings": {
+            "image": "shopify://shop_images/EternalTreeHighlight_1.png",
+            "emoji": "",
+            "label": "",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "category_wRLgga",
+        "category_VQCWzi",
+        "category_PPBAXg",
+        "category_4R9xUf"
+      ],
+      "name": "Category Icons",
+      "settings": {
+        "heading": "",
+        "color_scheme": "scheme-6",
+        "icon_size": 210,
+        "icon_size_mobile": 72,
+        "padding_top": 52,
+        "padding_bottom": 52
+      }
     },
     "product_list_fa6P9H": {
       "type": "product-list",
@@ -208,9 +300,8 @@
             "product_list_text_YFtzcL": {
               "type": "_product-list-text",
               "name": "t:names.collection_title",
-              "disabled": true,
               "settings": {
-                "text": "<h3>{{ closest.collection.title }}</h3>",
+                "text": "<p>Our Bestsellers</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -358,7 +449,7 @@
         "section_width": "page-width",
         "horizontal_alignment": "flex-start",
         "gap": 20,
-        "color_scheme": "scheme-1",
+        "color_scheme": "scheme-6",
         "padding-block-start": 48,
         "padding-block-end": 48
       }
@@ -367,7 +458,10 @@
       "type": "gazelle-strip",
       "name": "Gazelle Strip",
       "settings": {
-        "desktop_image": "shopify://shop_images/MontagudThinBanner.png"
+        "desktop_image": "shopify://shop_images/MontagudThinBanner.png",
+        "color_scheme": "",
+        "padding_top": 20,
+        "padding_bottom": 20
       }
     }
   },
@@ -375,6 +469,7 @@
     "gazelle_hero_PRaFbk",
     "gazelle_categories_Tx8ULP",
     "gazelle_focus_MM7NL8",
+    "gazelle_categories_p4pAFn",
     "product_list_fa6P9H",
     "gazelle_strip_atmg7i"
   ]
