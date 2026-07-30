@@ -1,4 +1,12 @@
-# ⭐ THIS FILE IS THE MASTER SOURCE OF TRUTH — read this first
+> ⚠️ **SYSTEM CHANGED 30 July 2026 — READ THIS FIRST**
+> Live state now lives in **STATUS.md** (open/outstanding) and **DONE.md** (completed log), both in repo root.
+> **This file is READ-ONLY REFERENCE from here on** — detail only (field mapping, integration specs, past decisions, traps). Do NOT `str_replace`-edit it for state changes; new state goes in STATUS.md / DONE.md.
+> Session-end updates: type `/update-context` (procedure lives in CLAUDE.md — single source of truth for the process).
+> **PENDING (quiet-afternoon job):** carve the detail sections below into `docs/*.md`, then retire this file.
+
+---
+
+# 🗄 ARCHIVED REFERENCE — superseded 30 July 2026 (was the master source of truth; live state now in STATUS.md / DONE.md)
 
 **Status & purpose.** This document is the canonical operating record for the Gazelle build AND for a new way of working that Bowden Studio intends to standardise across future clients. It is deliberately maintained rigorously and improved on a near-daily basis. It captures two layers: (1) **project/brand state** — Gazelle-specific people, decisions, brand, integration, build progress; and (2) **operational methodology** — how we work: native-first, the Claude Code collaboration loop, git/theme discipline, the reusable process. Layer (2) is the seed of a repeatable Bowden operating model.
 
