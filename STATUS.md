@@ -1,7 +1,7 @@
 # STATUS — Gazelle Books
 
 _The "now" list. Open loops and next actions only. Completed work lives in DONE.md._
-_Updated: 2026-07-30_
+_Updated: 2026-08-01_
 
 ## Blocking go-live
 - **DAVE — full catalogue load.** Store holds ~1,800 of ~54,500 titles (~3%). Event-driven integration only creates a product when a BooksoniX record changes, so the catalogue trickles in ~40–50/day. The full bulk load has never run; the force-update mechanism across the whole catalogue reportedly crashes BooksoniX. **This is the true go-live gate.** Next: once the re-push below is verified, ask Dave (Billy cc) for the plan + timeline on the full load.
@@ -25,11 +25,12 @@ _Updated: 2026-07-30_
 - Nav taxonomy proposal to Billy — gated on subject-distribution analysis.
 
 ## This week (system-critical)
-- **OURS — verify the `@docs/build-manual.md` import loads** in a fresh Claude Code session (ask it a manual rule, e.g. pull-clobber). Neither the import nor `/update-context` was active in the session that built them.
-- **OURS — monolith carve into `docs/`.** Carve the detail sections of `gazelle-context-working.md` into `docs/*.md`, then retire it. Quiet-afternoon job.
+- **OURS — monolith carve into `docs/`.** Carve the detail sections of `gazelle-context-working.md` into `docs/*.md`, then retire it. Quiet-afternoon job. The import chain is now proven (1 Aug), so anything carved into `docs/` will actually load. **Carry into the carve:** correct the stale Shopify CLI version — `gazelle-tech-stack.md` and `gazelle-context-working.md:759` both say **3.92.1**; actual is **4.6.0** (self-upgraded 1 Aug).
 
 ## Housekeeping
 - `custom.format` and `custom.genre` — 2 products each, undefined keys not in the 23-field contract. Unexplained. Investigate/clean when convenient.
 - Next product export MUST include the Tags column (didn't export last time — 0/1,734 rows read as "untagged" when coverage was unreadable).
 - BooksoniX Integration app client secret may have been rotated by Dave — UNVERIFIED. The 400 `application_cannot_be_found` came from placeholder creds, not a rotation test. Confirm before the type migration needs API access.
+- Shopify CLI now **4.6.0** (self-upgraded from 4.5.2 unprompted mid-`theme pull`, 1 Aug; global npm install so it moved for Gazelle too). If a CLI command behaves oddly for no reason, check the version first.
+- Gazelle is a **fork** of `Shopify/horizon` and is the only one there will ever be — GitHub allows one fork per upstream per account. Future GSD projects use a plain repo + mirror-push + `upstream` remote (Eye Books, `gsdworks/eyebooks-horizon`, 1 Aug). Do not "harmonise" Gazelle to that shape; the fork works.
 - Context system restructure: STATUS/DONE/digest-protocol now live. Claude.ai side = drag PROJECT-CONTEXT.md after each `/update-context` (GitHub Sync-now connector confirmed unreliable mid-2026 — do not rely on it). Optional later: trial Basic Memory Cloud (~£10/mo, 7-day trial) if the drag keeps getting forgotten.
