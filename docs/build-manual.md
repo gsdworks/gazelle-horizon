@@ -143,8 +143,9 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 **Known source-data bugs (Dave's side — do NOT work around them in Liquid):**
 - `width_mm` / `height_mm` land as literal `%sh_width_mm%` placeholder tokens. **The dimensions row is deliberately un-guarded so this shows live** — it's evidence for Dave and proof the front end works. Leave it.
 - `main_subjects` duplicates `&`/`and` label variants.
-- `series` arrives as an internal token (`__line:the_frean_chronicles`), not the series name, on all 385 products that have one. Raised with Dave 30 July. Do not parse the token in Liquid — it self-heals when he fixes the source.
-- `thema_subjects` / `bic_subjects` currently carry **decoded names, not raw codes**. Front end is already wired correctly and self-heals when Dave switches the source.
+- `series` arrives as an internal token (`__line:the_frean_chronicles`), not the series name, on **all 3,786 products that have one** (was 385 — it scaled with the catalogue load without changing). Raised with Dave 30 July, re-raised 3 August. Do not parse the token in Liquid — it self-heals when he fixes the source.
+- `thema_subjects` / `bic_subjects` — **codes are now arriving** (3 Aug: 24,456 Thema and 23,223 BIC are machine-readable codes like `SFH`, `CFA`, `WDMG1`). The ~10,700 records still in name format are the un-re-pushed tail and convert as the catalogue load completes. Front end was already wired correctly; nothing to change.
+- **`product.type` is EMPTY on 98.1% of the catalogue** (3 Aug: 35,073 of 35,745 blank; the 672 typed are an unchanged pre-June cohort). Cause is upstream — Billy's 28 May format-combine list was never implemented and the `product_type` write went out with the 3 June tax-mapping change. **The Format filter is dead until Dave fixes it.** Do not work around it in Liquid and do not source Format from anywhere else — verified it has not moved (Product Category populated on 4 products, options are Title/Default Title throughout, no metafield carries Paperback/Hardback).
 
 **`custom.pubcode` does not exist yet.** PUBCODE is currently only a substring inside `tags_global` (`PUBCODE: CE1 - LINDEN PUBLISHING INC`). Do not build anything that depends on a discrete pubcode metafield.
 
@@ -156,7 +157,7 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 |---|---|
 | Title | native `product.title` |
 | Description | native `product.description` (body HTML) |
-| Format (Paperback/Hardback) | native `product.type` |
+| Format (Paperback/Hardback) | native `product.type` — **⚠️ currently empty on 98.1% of products, see the source-data bugs above** |
 | Imprint | native `product.vendor` |
 | Price (UK RRP) | native price |
 | Cover image | native, first image |
@@ -195,7 +196,7 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 ## Collection page requirements
 
 - Use Horizon's **stock collection section** for faceting, sort, and pagination. Drop the custom card in via the grid-override pattern; do not hand-roll commerce plumbing.
-- **Filters are configured in the Search & Discovery APP** (admin), not the theme: **Format** ← product type, **Imprint** ← vendor, **Price**. Availability removed. App-side config needs no pull or commit.
+- **Filters are configured in the Search & Discovery APP** (admin), not the theme: **Format** ← product type, **Imprint** ← vendor, **Price**. Availability removed. App-side config needs no pull or commit. **⚠️ The Format filter will render empty or near-empty until Dave restores `product_type`** (98.1% blank as of 3 Aug) — do not treat that as a filter-config fault.
 - **S&D "grouped values" can combine formats natively** — may remove that job from Dave entirely. Pending Billy's finalised combine list.
 - The **Subject filter cannot be wired yet** — depends on the subject-taxonomy mapping, pending Billy. Do not fake it against guessed data.
 - **Tags are reserved for editorial overlay** (seasonal, staff picks, prize winners), never core taxonomy. The integration applies no tags automatically.
