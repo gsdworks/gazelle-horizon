@@ -1,6 +1,6 @@
 # Build manual — Gazelle Books Shopify Theme
 
-_Last updated: 17 July 2026. Split out of CLAUDE.md on 30 July 2026 when the STATUS/DONE context system was installed; auto-loaded by CLAUDE.md via `@docs/build-manual.md`._
+_Last updated: 11 August 2026. Split out of CLAUDE.md on 30 July 2026 when the STATUS/DONE context system was installed; auto-loaded by CLAUDE.md via `@docs/build-manual.md`._
 
 This file defines how to work in this repo. Read it before touching any file.
 
@@ -143,11 +143,14 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 **Known source-data bugs (Dave's side — do NOT work around them in Liquid):**
 - `width_mm` / `height_mm` land as literal `%sh_width_mm%` placeholder tokens. **The dimensions row is deliberately un-guarded so this shows live** — it's evidence for Dave and proof the front end works. Leave it.
 - `main_subjects` duplicates `&`/`and` label variants.
-- `series` arrives as an internal token (`__line:the_frean_chronicles`), not the series name, on **all 3,786 products that have one** (was 385 — it scaled with the catalogue load without changing). Raised with Dave 30 July, re-raised 3 August. Do not parse the token in Liquid — it self-heals when he fixes the source.
-- `thema_subjects` / `bic_subjects` — **codes are now arriving** (3 Aug: 24,456 Thema and 23,223 BIC are machine-readable codes like `SFH`, `CFA`, `WDMG1`). The ~10,700 records still in name format are the un-re-pushed tail and convert as the catalogue load completes. Front end was already wired correctly; nothing to change.
-- **`product.type` is EMPTY on 98.1% of the catalogue** (3 Aug: 35,073 of 35,745 blank; the 672 typed are an unchanged pre-June cohort). Cause is upstream — Billy's 28 May format-combine list was never implemented and the `product_type` write went out with the 3 June tax-mapping change. **The Format filter is dead until Dave fixes it.** Do not work around it in Liquid and do not source Format from anywhere else — verified it has not moved (Product Category populated on 4 products, options are Title/Default Title throughout, no metafield carries Paperback/Hardback).
+- **⚠️ 11 Aug: the remaining source-data defects are ONE stale cohort of 1,057 products, not four separate bugs.** Overlapping membership: 934 blank Product Type, 548 Thema-as-names, 529 placeholder dimensions, 342 `__line:` series tokens. A single re-push by Dave clears all four. Re-push list emailed 11 Aug. Everything below is that cohort unless stated.
+- `series` arrives as an internal token (`__line:the_frean_chronicles`), not the series name, on **342 products** (was 3,786 on 3 Aug — the re-pushed majority has healed). Do not parse the token in Liquid — the rest self-heals when Dave re-pushes the cohort.
+- `thema_subjects` / `bic_subjects` — codes are the norm now; **548 records still in name format**, all inside the stale cohort. Front end was already wired correctly; nothing to change.
+- **`product.type` HAS LANDED — 98.1% COVERAGE as of 11 Aug, values verified against Billy's 28 May combine list.** This reverses the 3 Aug entry that said it was empty on 98.1% (the numbers are a coincidence — that was 98.1% *blank*, this is 98.1% *populated*). **The Format filter is live.** Residual: 934 blank (stale cohort), plus value decisions pending with Billy — `Mixed-media product` ×126 (absent from his combine list), `Undefined` ×12, `Pamphlet` ×1 (should be Paperback).
 
 **`custom.pubcode` does not exist yet.** PUBCODE is currently only a substring inside `tags_global` (`PUBCODE: CE1 - LINDEN PUBLISHING INC`). Do not build anything that depends on a discrete pubcode metafield.
+
+**`custom.thema_top` — a 24th field, OURS not Dave's (created 11 Aug).** `list.single_line_text_field` with the `smartCollectionCondition` capability, holding the top-level letters derived from the Thema codes. It exists because **smart-collection metafield conditions support ONLY "is equal to"** — prefix matching is impossible, so the value you want to match has to be derived and stored. (Equals against a list field matches if any entry matches.) Backfilled onto 47,247 products by `scripts/populate_thema_top.py`. **It is NOT self-maintaining:** products arriving from Dave have no `thema_top` and silently miss the subject collections until the script is re-run. The fix is Dave pushing the field natively — until then, re-run the script after any significant load. Reuse this derive-then-equals pattern for any future taxonomy collection.
 
 **Data expectations:** many fields render empty until BooksoniX populates them. That is expected and fine. Empty rows hide.
 
@@ -157,7 +160,7 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 |---|---|
 | Title | native `product.title` |
 | Description | native `product.description` (body HTML) |
-| Format (Paperback/Hardback) | native `product.type` — **⚠️ currently empty on 98.1% of products, see the source-data bugs above** |
+| Format (Paperback/Hardback) | native `product.type` — **populated on 98.1% of products as of 11 Aug; the Format filter is live** |
 | Imprint | native `product.vendor` |
 | Price (UK RRP) | native price |
 | Cover image | native, first image |
@@ -196,11 +199,11 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 ## Collection page requirements
 
 - Use Horizon's **stock collection section** for faceting, sort, and pagination. Drop the custom card in via the grid-override pattern; do not hand-roll commerce plumbing.
-- **Filters are configured in the Search & Discovery APP** (admin), not the theme: **Format** ← product type, **Imprint** ← vendor, **Price**. Availability removed. App-side config needs no pull or commit. **⚠️ The Format filter will render empty or near-empty until Dave restores `product_type`** (98.1% blank as of 3 Aug) — do not treat that as a filter-config fault.
+- **Filters are configured in the Search & Discovery APP** (admin), not the theme: **Format** ← product type, **Imprint** ← vendor, **Price**. Availability removed. App-side config needs no pull or commit. **Format is live as of 11 Aug** (`product.type` populated on 98.1%). Note the Imprint filter will show **three separate Nova Science entries** — the publisher name has 3 spelling variants across ~20k products, a source-normalisation issue, not a filter fault.
 - **S&D "grouped values" can combine formats natively** — may remove that job from Dave entirely. Pending Billy's finalised combine list.
-- The **Subject filter cannot be wired yet** — depends on the subject-taxonomy mapping, pending Billy. Do not fake it against guessed data.
+- The **Subject filter** now has real data behind it via `custom.thema_top` (see the metafield contract). Labels are pending Billy's sign-off — do not rename collections ahead of that call.
 - **Tags are reserved for editorial overlay** (seasonal, staff picks, prize winners), never core taxonomy. The integration applies no tags automatically.
-- **⚠️ Collections are TWO separate problems — don't bundle them.** (1) **Subject taxonomy** collections key off Thema/BIC/`main_subjects` — Billy's decision. (2) **Homepage curation** (Focus/Highlights) keys off PUBCODE — blocked on Dave surfacing PUBCODE as a discrete metafield. They have different owners and different blockers; solving one does not advance the other.
+- **⚠️ Collections are TWO separate problems — don't bundle them.** (1) **Subject taxonomy** — **BUILT 11 Aug**: 24 collections live (All Books, Home page, 4 merch smart collections on Product Type, 18 subject smart collections on `custom.thema_top`), created by `scripts/create_gazelle_collections.py`, counts verified against export analysis. Remaining is Billy's sign-off on labels and nav picks. Note **Thema has no `B` top level** — biography is `DN*` under `D`, so a Biography category needs a second-level `thema_top2` derivation, not a new letter. (2) **Homepage curation** (Focus/Highlights) keys off PUBCODE — still blocked on Dave surfacing PUBCODE as a discrete metafield. Different owners, different blockers; solving one does not advance the other.
 
 ## The grid-override pattern (CRITICAL — reuse for every commerce page)
 
