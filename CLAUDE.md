@@ -1,6 +1,6 @@
 # CLAUDE.md — Gazelle Books Shopify build
 
-Repo for `store.gazellebooks.co.uk` (dev: `gazelle-books-2026.myshopify.com`). Forked Horizon theme. This file loads every session — keep it short.
+Repo for `shop.gazellebookservices.co.uk` (dev: `gazelle-books-2026.myshopify.com`). Forked Horizon theme. This file loads every session — keep it short.
 
 ## Where things live
 - **STATUS.md** — open loops, blocked-on, next actions. The "now" list. Read it at the start of every session.
