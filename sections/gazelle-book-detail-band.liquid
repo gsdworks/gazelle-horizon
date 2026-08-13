@@ -19,10 +19,15 @@
   assign main_subjects = product.metafields.custom.main_subjects.value
   assign thema_subjects = product.metafields.custom.thema_subjects.value
   assign bic_subjects = product.metafields.custom.bic_subjects.value
-  assign bisac_subjects = product.metafields.custom.bisac_subjects.value
+
+  comment
+    BISAC is deliberately NOT rendered — Billy confirmed 8 Jul: Thema + BIC are
+    sufficient. custom.bisac_subjects keeps arriving from BooksoniX as data; we
+    just don't display it. Don't re-add a BISAC group without a new decision.
+  endcomment
 
   assign has_classification = false
-  if thema_subjects != blank or bic_subjects != blank or bisac_subjects != blank
+  if thema_subjects != blank or bic_subjects != blank
     assign has_classification = true
   endif
 %}
@@ -148,21 +153,6 @@
               <div class="gazelle-band__chips">
                 {% assign bic_codes = bic_subjects | split: ',' %}
                 {% for code in bic_codes %}
-                  {% assign code_value = code | strip %}
-                  {% if code_value != blank %}
-                    <span class="gazelle-band__chip gazelle-band__chip--code">{{ code_value }}</span>
-                  {% endif %}
-                {% endfor %}
-              </div>
-            </div>
-          {% endif %}
-
-          {% if bisac_subjects != blank %}
-            <div class="gazelle-band__code-group">
-              <p class="gazelle-band__code-label">BISAC</p>
-              <div class="gazelle-band__chips">
-                {% assign bisac_codes = bisac_subjects | split: ',' %}
-                {% for code in bisac_codes %}
                   {% assign code_value = code | strip %}
                   {% if code_value != blank %}
                     <span class="gazelle-band__chip gazelle-band__chip--code">{{ code_value }}</span>
