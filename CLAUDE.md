@@ -39,6 +39,7 @@ Repo for `shop.gazellebookservices.co.uk` (dev: `gazelle-books-2026.myshopify.co
 - A Matrixify green "OK" is NOT a verified write — confirm against a store export.
 - A finding needs a victim — name who's harmed and how, or it's a curiosity, not a finding.
 - Verify against source before flagging; confirm a column is populated before reading its absence as a finding.
+- Never use Shopify's platform Custom CSS field (`settings_data.json` `platform_customizations.custom_css`). If layout misbehaves and the repo looks right, check it first.
 
 ## Session-end update — run when Grant types `/update-context` (follow EXACTLY, every time)
 1. **Read the current STATUS.md first** (never regenerate from memory — that silently drops open loops).

@@ -86,7 +86,9 @@ _Why: the 16 July carousel prompt asserted "the calc resolves `100%` against the
   6. **Pull before diagnostics too, not just before edits** (see Agent execution rules).
 
 - **Prefix all custom files `gazelle-`.** Sections: `sections/gazelle-*.liquid`. Blocks: `blocks/gazelle-*.liquid`. Snippets: `snippets/gazelle-*.liquid`. Custom templates: `templates/*.gazelle.json`.
-- **Scope all custom CSS with `{% style %}`** inside the section/snippet that uses it. Horizon has **no global custom-CSS field**, so there is no other correct place for it. No separate stylesheet edits to core assets.
+- **Scope all custom CSS with `{% style %}`** inside the section/snippet that uses it. No separate stylesheet edits to core assets.
+  - **⚠️ CORRECTION (18 Aug 2026):** this rule previously justified itself with "Horizon has no global custom-CSS field". **That was wrong.** Shopify has a **platform-level Custom CSS field**, stored at `config/settings_data.json` → `platform_customizations.custom_css` and injected as an inline `<style>` at the **end of `<body>`** — invisible to anyone reading the theme's files. The scoping rule stands; its stated reason did not.
+  - **NEVER use the platform Custom CSS field.** On 18 Aug three `!important` rules found living there (`max-width: 220px` on every `.product-media-container`, a forced `text-align: center` on every left-aligned text block) had been silently overriding `gazelle-cover-styles` and every editor alignment setting, and cost a full session to find. **If layout misbehaves inexplicably, check that field FIRST.** Clearing it in the editor did not take — push it with `shopify theme push --only config/settings_data.json`.
 - **No page builders, no third-party UI frameworks, no CSS libraries.** Vanilla Liquid + CSS + minimal JS.
 - **Lazy-load below-the-fold sections. Minimise JS.** Test on a mid-range Android on a slow connection, not just desktop.
 - **Bind to native Shopify objects wherever one exists** (menus, policy pages, social settings, product fields) rather than hardcoding.
@@ -239,9 +241,17 @@ Horizon's product card (`blocks/_product-card.liquid`) and the collection sectio
 **Product / media**
 - **Media wrappers carry `overflow: hidden` ≥750px** — clips box-shadows on cover images. Fix with scoped `overflow: visible`, `:only-child`-gated.
 - **`media_fit` is dead code when a fixed aspect ratio is set** — the native "contain" toggle silently does nothing.
-- **Native hero grid pins the buy box right as a fixed 400px strip.** The mockup's proportional `minmax(300px,1fr) minmax(0,1.15fr)` is the fix.
+- **Native hero grid pins the buy box right as a fixed 400px strip.** Superseded 18 Aug: the current override is `minmax(280px, 400px) minmax(0, 1fr)` with `max-width: 600px` on `.product-details`. (The earlier `minmax(300px,1fr) minmax(0,1.15fr)` proportional pair is history, not the current value.)
 - **`--gz-gutter` (24px)** — cover-left, buy-box-right and both band inner edges key off it. Define globally to move them together.
 - **`product.type | capitalize` mangles multi-word types** ("Hardcover Non-Fiction" → "Hardcover non-fiction"). Check the real BooksoniX values before trusting it.
+
+**Product / buy box (v3.4 — banked 18 Aug)**
+- **The media gallery is ALREADY sticky, natively.** `<media-gallery>` carries `sticky-content` unconditionally (`snippets/product-media-gallery-content.liquid:338`) and `base.css:2574` gives it `position: sticky`. Never re-implement it. The only gap is `--sticky-header-offset`, which core assigns to `.product-details` only — retarget it at the gallery or the cover slides under a sticky header.
+- **`buy-buttons` is a CONTAINER**, carrying Quantity, Add to cart and Accelerated checkout as children. The standalone `quantity` block is redundant alongside it.
+- **There is no `icon-with-text` block.** Assemble `group` (Direction: Horizontal) + `icon` + `text`. Inner groups need Width **FIT** — Fill splits the row into equal thirds and wraps the longest item.
+- **Never set a group's `Link` on a group containing the cart form** — `snippets/group.liquid:34` wraps all children in an `<a href>`.
+- **`text` and `price` expose `font`, `font_size`, `letter_spacing`, `case`, `color` natively** — uppercase tracked labels and price weight need no CSS. But `text`'s colour offers only foreground / foreground-heading / primary: **no muted**. Text Width (Fit/Fill) and Max width (Narrow/Normal/None) interact — **Fill + None** for a full measure. Price size is a **px** dropdown; text size is **rem**.
+- **⚠️ The rich-text field strips Liquid.** It (a) removes Liquid-built `<a href>` anchors and (b) parses `{{ }}` as a dynamic source and errors on any filter chain ("Change or remove the dynamic source(s) with errors"), leaving stray `">` fragments. **Anything needing a Liquid-built link or a filter must be a `custom-liquid` block** — which forfeits that block's native typography settings and pushes styling into a scoped snippet. Plain single-metafield dynamic sources (`{{ closest.product.metafields.custom.subtitle.value }}`) work fine.
 
 **Shopify editor**
 - **Rich text stores Enter inconsistently** — sometimes `<br/><br/>` inside one `<p>`, sometimes a real paragraph split. If CSS depends on paragraph structure, force a genuine split. **CSS has no `::last-line`**; `::first-line` only works predictably when an explicit break pins where the line ends.
@@ -259,12 +269,12 @@ Horizon's product card (`blocks/_product-card.liquid`) and the collection sectio
 - `snippets/gazelle-product-card.liquid` — the reusable atom. Takes a `product` param; renders cover/format/title/author/price. No wrapping `<a>` (Horizon's grid shell supplies the link). No compare-at/discount messaging. Reuse via `{% render 'gazelle-product-card', product: <product> %}`.
 - `snippets/gazelle-book-specs.liquid` — specs table (`<dl>`), all confirmed metafields with `.value`, empty rows hidden, **dimensions deliberately un-guarded**.
 - `sections/gazelle-book-detail-band.liquid` — two-column bottom band. Tabs desktop / accordion mobile (first custom JS — scoped IIFE, a11y-correct). Subjects + Classification cards.
-- `snippets/gazelle-cover-styles.liquid` — cover sizing (570px fixed height, natural width, contain, left-aligned, border+shadow), hero grid, buy-box inset. **Rendered via a custom-liquid block in `product.json` — that block is COMMITTED, do not lose it.**
+- `snippets/gazelle-cover-styles.liquid` — cover sizing (**`clamp(320px, 32vw, 420px)`, ceiling 420px** as of 18 Aug — the old "570px" note here was stale, it was 475px before this session; natural width, contain, **centred in its column**, border+shadow), hero grid `minmax(280px, 400px) minmax(0, 1fr)`, buy-box inset + `max-width: 600px`, and the sticky-header offset retarget. **Centring reversed the 8 July flush-to-`--gz-gutter` decision** — a bounded 400px column and a left-flush cover cannot both hold. **Rendered via a custom-liquid block in `product.json` — that block is COMMITTED, do not lose it.**
 - `sections/gazelle-footer-styles.liquid` — style-only section, footer typography.
 
 **Pages**
 - **Collection page** — DONE Phase 1 (7 Jul). Native-first, ~zero custom CSS.
-- **Product page** — ~85% (8 Jul). Remaining: buy-box supporting elements, New Release ribbon, price display (gated), Press & Reviews (gated), Subject links (taxonomy).
+- **Product page** — buy box BUILT 18 Aug, entirely from native blocks, in the theme editor. Remaining: `gazelle-buy-box-styles` (`.gz-imprint`, `.gz-author` — the only custom CSS left), stock-indicator brand colour tokens, New Release ribbon (blocked on `publication_date` type), price display (gated), Press & Reviews (gated), Subject links (taxonomy).
 - **Footer** — BUILT + STYLED (14 Jul). Native four-column + utilities bar, Charcoal. **`footer-group.json` was NEVER used** — it had been silently overwritten by the editor; hand-built instead.
 - **Header** — BUILT (14 Jul), native config + tokens, no custom section. **⚠️ The nav still carries the old Main menu including a `Catagories` typo — do NOT ship.** Real labels gated on taxonomy (admin → Navigation, zero theme work).
 - **Homepage sections:** `gazelle-hero` (slideshow — uses a **dedicated mobile image at 800×367px**, do not strip it), `gazelle-focus` (three-panel scroller), `gazelle-strip` (banner), `gazelle-categories` (icon grid). **Billy's real artwork is in as of 16 July.**
