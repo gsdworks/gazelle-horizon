@@ -23,8 +23,16 @@
                   The 24px inset is gone because the band no longer carries
                   inline padding either — both sections are flush at the rail.
 
-  Column split now comes from --gz-grid-columns / --gz-grid-gap in
-  snippets/gazelle-layout.liquid, shared with sections/gazelle-book-detail-band.liquid.
+  18 Aug 2026, later — HERO OPTS OUT OF THE SHARED SPLIT. It briefly used
+  --gz-grid-columns / --gz-grid-gap alongside the band; it now uses its own tight
+  left-aligned pair (460px panel + 48px + max 520px buy box = 1028px) that stops
+  short of the right rail on purpose, per the Fitzcarraldo reference. The BAND
+  still uses those tokens and still spans rail to rail. Left rail is shared; the
+  right rail is a band-only edge.
+
+  The cover also now sits inside a fixed 460x560 tinted PANEL rather than being
+  sized directly — same silhouette on every product page whatever the cover's
+  aspect ratio.
 
   Render on the product template, e.g. {% render 'gazelle-cover-styles' %}.
 {% endcomment %}
@@ -33,33 +41,53 @@
   /* Page width (1200px) is now set globally in snippets/gazelle-layout.liquid —
      the local --page-width override that used to live here has been removed. */
 
+  /* THE COVER PANEL. A fixed 460x560 tinted panel, flush to the left rail, with
+     the cover image centred on both axes inside it. Fixed size regardless of the
+     cover's aspect ratio — that is the point: every product page presents the
+     same silhouette, and tall/short/wide covers no longer change the layout.
+     The container is already `display: flex` from base.css, so centring is just
+     align-items / justify-content. */
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */
-    height: clamp(320px, 32vw, 420px);  /* consistent height, fluid, ~420px desktop */
-    max-height: 420px;                  /* hard ceiling; overrides Horizon constrain-height */
-    width: auto;                        /* natural width per cover, no distortion */
+    width: 460px;
+    height: 560px;
     max-width: 100%;
+    max-height: none;                   /* overrides Horizon's constrain-height cap */
+    background: #f3efe8;                /* paper, one step darker than --gz-paper #faf7f2 */
+    border-radius: 2px;
     margin-inline: 0;                   /* flush to the media column's left edge = the page's left rail */
-    margin-block-start: 24px;           /* align cover top with title (details block padding-block-start: 24) */
+    margin-block-start: 24px;           /* align panel top with title (details block padding-block-start: 24) */
     align-self: start;                  /* stop stretching to fill the cell */
-    justify-self: start;                /* flush left, not centred — see ALIGNMENT HISTORY */
-    overflow: visible;                  /* so the shadow isn't clipped */
+    justify-self: start;                /* flush left — see ALIGNMENT HISTORY */
+    align-items: center;                /* centre the cover vertically in the panel */
+    justify-content: center;            /* centre the cover horizontally in the panel */
+    overflow: visible;                  /* so the image's shadow isn't clipped */
   }
 
-  /* Left-align the cover inside its container: overrides the theme's
-     justify-content: center on the constrain-height constraint wrapper.
-     .constrain-height is required so specificity (0,4,0) beats the theme's
-     .product-media-container.constrain-height:has(...) rule (0,3,0). */
+  /* Centre the cover inside the panel. .constrain-height is required so
+     specificity (0,4,0) beats the theme's
+     .product-media-container.constrain-height:has(...) rule (0,3,0), which
+     would otherwise re-assert its own justify-content. */
   .product-information__media .product-media-container.constrain-height:only-child {
-    justify-content: flex-start;
+    justify-content: center;
+  }
+
+  /* .product-media is `display: flex; flex: 1` in base.css:1902, so it would
+     stretch across the whole panel and the image would sit left, not centred.
+     Shrink it to its content and centre within it. */
+  .product-information__media .product-media-container:only-child .product-media {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
   }
 
   .product-information__media .product-media-container:only-child img {
     aspect-ratio: auto;
     object-fit: contain;                /* never crop a cover; beats media-fit-cover */
-    height: 100%;
-    max-height: 420px;                  /* image itself can't exceed 420px */
-    width: auto;
+    height: auto;
+    max-height: 480px;                  /* 40px of panel breathing room top and bottom */
+    width: auto;                        /* natural width per cover, no distortion */
+    max-width: 100%;
   }
 
   /* Border + shadow on the actual cover image. Explicit .product-media__image
@@ -77,8 +105,15 @@
     overflow: visible;
   }
 
-  /* Hero columns — the SHARED split, from snippets/gazelle-layout.liquid.
-     The band uses the same two tokens, so the two sections cannot drift.
+  /* Hero columns — a TIGHT LEFT-ALIGNED PAIR, deliberately NOT the shared split.
+     460px panel + 48px gap + a buy box capped at 520px = 1028px, sitting inside
+     the 1200px rails and stopping 172px short of the right rail on purpose
+     (Fitzcarraldo reference). `justify-content: start` pins that leftover space
+     to the right instead of distributing it between the tracks.
+
+     The band still uses --gz-grid-columns / --gz-grid-gap and still spans rail
+     to rail; only the hero opts out.
+
      Specificity (0,4,0) beats the native (0,3,0) rules at
      product-information-content.liquid:169 and :288.
 
@@ -86,11 +121,12 @@
      sets `gap: var(--gap) 0` (row 48, column ZERO) and fakes the gutter with
      padding-right / padding-left of --gap/2 on the two columns. That padding is
      zeroed below so the gutter comes from a real column-gap instead — otherwise
-     the hero's outer edges sit 24px inside the band's and no rail can line up. */
+     the panel sits 24px inside the left rail. */
   @media screen and (min-width: 750px) {
     .product-information .product-information__grid.product-information--media-left:not(.product-information--media-none) {
-      grid-template-columns: var(--gz-grid-columns);
-      column-gap: var(--gz-grid-gap);
+      grid-template-columns: 460px minmax(0, 520px);
+      column-gap: 48px;
+      justify-content: start;
     }
 
     /* Zero core's half-gutter padding. Core declares it at 0,4,0
@@ -103,6 +139,22 @@
 
     .product-information .product-information__grid.product-information--media-left:not(.product-information--media-none) .product-details {
       padding-left: 0;
+    }
+  }
+
+  /* Below 750px the columns stack, so the fixed panel becomes fluid: full column
+     width at a 4/5 aspect instead of 460x560. The image cap drops to 100% of the
+     panel — a flat 480px would overflow a panel that is only ~420px tall on a
+     375px-wide phone. */
+  @media screen and (max-width: 749px) {
+    .product-information__media .product-media-container:only-child {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 5;
+    }
+
+    .product-information__media .product-media-container:only-child img {
+      max-height: 100%;
     }
   }
 
