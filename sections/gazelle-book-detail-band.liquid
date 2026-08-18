@@ -360,6 +360,10 @@
     font-size: 16px;
     line-height: 1.7;
     color: var(--gz-ink);
+    /* Measure cap sits here, not on .gazelle-band__details: ch resolves against
+       the element's own font, and this is the only element in the column with an
+       explicit font-family + size, so 68ch is predictable here. */
+    max-width: 68ch;
   }
 
   .gazelle-band__rte p {
