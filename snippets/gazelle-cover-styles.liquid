@@ -20,8 +20,8 @@
 
   .product-information__media .product-media-container:only-child {
     aspect-ratio: auto;                 /* kill the forced 1/1.25 */
-    height: clamp(360px, 40vw, 475px);  /* consistent height, fluid, ~475px desktop */
-    max-height: 475px;                  /* hard ceiling; overrides Horizon constrain-height */
+    height: clamp(320px, 32vw, 420px);  /* consistent height, fluid, ~420px desktop */
+    max-height: 420px;                  /* hard ceiling; overrides Horizon constrain-height */
     width: auto;                        /* natural width per cover, no distortion */
     max-width: 100%;
     margin-inline: 0;                   /* left-align (override Horizon auto-centring) */
@@ -44,7 +44,7 @@
     aspect-ratio: auto;
     object-fit: contain;                /* never crop a cover; beats media-fit-cover */
     height: 100%;
-    max-height: 475px;                  /* image itself can't exceed 475px */
+    max-height: 420px;                  /* image itself can't exceed 420px */
     width: auto;
   }
 
@@ -79,6 +79,35 @@
   @media screen and (min-width: 750px) {
     .product-information .product-details {
       margin-inline-end: var(--gz-gutter, 24px);
+    }
+  }
+
+  /* Sticky cover — HEADER OFFSET ONLY. The sticky itself is native.
+     <media-gallery> already carries Horizon's `sticky-content` class,
+     unconditionally and with no setting gating it
+     (snippets/product-media-gallery-content.liquid:338), and base.css:2574
+     gives that class `position: sticky; top: var(--sticky-header-offset, 0)`.
+     media-gallery is `display: block` with no height (base.css:1589) inside a
+     stretched grid item, so it has travel. We therefore add NO position and NO
+     top of our own — that would be re-implementing native behaviour.
+
+     The one real gap: core assigns --sticky-header-offset to the BUY BOX only
+     (product-information-content.liquid:314, scoped to
+     `.product-details.sticky-content--desktop`). The media column is left on the
+     `0` fallback, so with the header set to enable_sticky_header: "always" the
+     cover sticks flush to the viewport top and slides UNDER the header on scroll.
+     Victim: anyone scrolling a product page — the cover is progressively hidden
+     behind the header exactly when the sticky is meant to keep it visible.
+
+     Fix reuses core's own condition and token, retargeted at the gallery.
+     Deliberately NOT :only-child gated, unlike the sizing rules above: a
+     multi-image gallery slides under the header just the same, and this
+     corrects a native offset rather than restyling the gallery.
+     Desktop only — below 750px the columns stack and sticky travel is unwanted. */
+  @media screen and (min-width: 750px) {
+    body:has(#header-group #header-component[data-sticky-state='active'])
+      .product-information__media media-gallery {
+      --sticky-header-offset: var(--header-height);
     }
   }
 {% endstyle %}
