@@ -215,13 +215,28 @@
     --gz-sans: var(--font-body--family, "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   }
 
+  /* Width and split are taken from the SAME tokens the product hero uses, so the
+     band and the hero share one pair of vertical rails and cannot drift apart
+     (18 Aug 2026 — they had drifted to a 176px right-edge mismatch).
+
+     max-width restates Horizon's --full-page-grid-central-column-width from
+     tokens inherited off <body>, rather than a second hardcoded 1200. This
+     section is a bare <section>, NOT a Horizon .section, so it does not get the
+     section grid and must reproduce that column itself. The min() matters below
+     1280px viewport, where the central column is 100% - 2*margin rather than the
+     full content width — a flat max-width: 1200px diverged from the hero by up
+     to 80px there.
+
+     Inline padding is deliberately 0: the hero has no padding at its outer
+     edges either, so both sections sit flush on the rails. The 48px gutter comes
+     from --gz-grid-gap on both. */
   .gazelle-band__inner {
-    max-width: 1200px;
+    max-width: min(var(--page-content-width, 1200px), calc(100% - var(--page-margin, 40px) * 2));
     margin: 0 auto;
-    padding: 32px var(--gz-gutter, 24px) 48px;
+    padding: 32px 0 48px;
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: 48px;
+    grid-template-columns: var(--gz-grid-columns);
+    gap: var(--gz-grid-gap);
     align-items: start;
   }
 
@@ -232,6 +247,33 @@
   /* Left column: responsive tabs (desktop) / accordion (mobile).
      One markup; base styles = accordion, the 701px query = tabs. The active
      panel's top border draws the full-width hairline under the tab row. */
+  /* --gz-tab-row-height — the vertical offset from the top of .gazelle-band__tc
+     down to the top of the FIRST LINE BOX inside the active panel. The rail's
+     first card uses it as margin-top so the Subjects card's top border meets the
+     first line of synopsis text, not the tab row above it.
+
+     Derived from the >=701px (tabs) rules immediately below:
+       tab padding-block-start                        14px
+       tab line box            13px font x 1.3 lh  =  16.9px
+       tab padding-block-end                          14px
+       tab border-bottom (2px transparent, still
+         occupies space in the box)                    2px
+                                          tab row  =  46.9px
+       tab margin-bottom -1px pulls the wrapped
+         panel flex line up                           -1px
+                            top of panel box       =  45.9px
+       panel border-top                                1px
+       panel padding-block-start                      28px
+                                                   =  74.9px  ->  75px
+
+     METRIC-DEPENDENT: if the tab's padding, font-size or line-height changes, or
+     the panel's border/padding changes, recompute this. It is declared on
+     .gazelle-band (not inside the media query) so the rail rule can read it; the
+     rail only consumes it above 900px, where the two columns actually exist. */
+  .gazelle-band {
+    --gz-tab-row-height: 75px;
+  }
+
   .gazelle-band__tc {
     display: block;
     border-bottom: 1px solid var(--gz-border);
@@ -375,10 +417,14 @@
   }
 
   /* rail */
+  /* margin-top drops the rail past the tab row so the first card's top border
+     meets the first line of synopsis text. Reset to 0 below 900px, where the
+     columns stack and there is no tab row to clear. */
   .gazelle-band__rail {
     position: sticky;
     top: 90px;
     align-self: start;
+    margin-top: var(--gz-tab-row-height);
   }
 
   .gazelle-band__card {
@@ -457,6 +503,7 @@
 
     .gazelle-band__rail {
       position: static;
+      margin-top: 0;
     }
   }
 {% endstyle %}
