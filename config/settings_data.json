@@ -636,10 +636,6 @@
     }
   },
   "platform_customizations": {
-    "custom_css": [
-      ".product-media__image {object-fit: contain !important;}",
-      ".product-media-container {--product-media-fit: contain !important; max-width: 220px; margin: 0 auto;}",
-      ".text-block--align-left {text-align: center !important;}"
-    ]
+    "custom_css": []
   }
 }
