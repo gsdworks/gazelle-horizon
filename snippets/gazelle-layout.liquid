@@ -43,6 +43,27 @@
     --page-content-width: 1200px;
   }
 
+  /* Shared two-column split — THE single source for both the product hero and
+     the book detail band, so the two can never drift apart again (18 Aug 2026).
+
+     Deliberately on plain `body`, not `body.page-width-narrow`: the split is
+     independent of the page-width preset, and scoping it to `narrow` would make
+     the theme-editor width control silently change the column ratio too.
+
+     At the 1200px content width with a 48px gap: 1200 - 48 = 1152 available,
+     1.4fr + 1fr = 2.4fr, so 1fr = 480px and 1.4fr = 672px. That keeps the buy
+     box / rail column at ~480 (wide enough for the three-item trust strip) while
+     the left column at 672 comfortably clears the 68ch synopsis measure (~571px
+     at Switzer 16px).
+
+     Consumed by:
+       snippets/gazelle-cover-styles.liquid   (product hero grid)
+       sections/gazelle-book-detail-band.liquid (band grid) */
+  body {
+    --gz-grid-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    --gz-grid-gap: 48px;
+  }
+
   /* Featured-collection carousel width fix.
      product-list's carousel layout hard-codes the `force-full-width` class on its
      wrapper (snippets/resource-list.liquid), so base.css's
