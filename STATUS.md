@@ -44,18 +44,21 @@ Carried, lower priority:
 - **Older open decisions:** subject nav labels + main-nav picks; Mixed-media product (126 titles, absent from his 28 May combine list); Trajan Pro licensing; behaviour for future-dated titles; policy-page facts (registered address, company + VAT numbers, returns window, who pays return postage, delivery tiers/rates, despatch cut-off, UK-only vs international); catalogue count nod.
 - **Discounts** — expects a follow-up. He believed the 25% RRP automation was live; corrected 12 Aug to agreed-but-not-built, blocked on PUBCODE.
 - **Security recommendation** — names.co.uk password was sent plaintext and is weak. Recommend he rotates it and enables 2FA **before go-live**.
-- **Product-page preview + go-live framing.** Owed since 20 Jul.
+- **Product-page preview + go-live framing.** Owed since 20 Jul. **The page is now presentable** — send it once the panel/spacing tune under OURS is done.
 - **Ebook exclusion scope.** He excluded ONIX 14 (Digital, delivered electronically) but not 21 (Electronic book text) or 20 (E-book reader). One-line question: should 21 also be excluded?
 
 ## Open loops — FRED
 - **Delta (changed-only) stock feed.** Awaiting since ~20 Jul. At ~49.4k products a full nightly snapshot against the ~5k variant-updates/hour ceiling will not fit the 02:00 window. Not a hard go-live blocker (full-file path proven end-to-end), but the maths does not work at this scale.
 
 ## Open loops — OURS
+- **Hero/band vertical air** — the hero and the Synopsis tabs read as joined. Band top padding 32 → ~72, or add bottom padding on `product-information`. One number. — next session
+- **Cover fill in the panel** — the cover may sit small inside the 460×560 panel. Try image `max-height: 500px`, or a 440×540 panel. **Check on a wide-format art book**, not just a standard trade paperback — the panel is fixed and a landscape cover is the case that breaks. — next session
+- **Remove the inert `max-width: 720px` on `.gazelle-band__details`** — dead at a 672px column. Next time that file is open.
 - **`gazelle-buy-box-styles` snippet** — `.gz-imprint` uppercase tracked 0.75rem, `.gz-author` slightly muted. The only remaining custom CSS for the buy box; needed because the imprint and author rows had to become custom-liquid blocks (rich-text strips Liquid links), which forfeits their native typography settings. — next session
 - **Stock-indicator colour tokens** — `--color-instock` / `--color-lowstock` / `--color-outofstock` are still Horizon defaults (grey dot). Set them to the brand traffic-light colours. — next session
 - **Mobile trust strip** — the three inner Groups have "Vertical on mobile" ON, stacking icon above text. Set it OFF on all three. Editor, ~2 min.
 - **Synopsis "Read more" clamp** (~10 lines) in the detail-band IIFE. — parked
-- **DECISION TO WRITE DOWN: is Claude Code auto mode / agent-executed live pushes acceptable?** Auto mode was accidentally enabled on 18 Aug. Given GSD Gazelle Build is the **published** theme, an agent-executed push is live to anyone with the store password. Switch auto mode off and record the policy.
+- **DECISION STILL OWED: is Claude Code auto mode / agent-executed live pushes acceptable?** Auto mode was re-enabled twice on 18 Aug via the setup dialogue; on both occasions **pushes stayed manual and none was agent-executed**. Given GSD Gazelle Build is the **published** theme, an agent-executed push would be live to anyone with the store password. Switch auto mode off and write the policy down.
 - **Holding page** — customise `templates/password.liquid`: logo, "New bookshop launching late August" (matches the marketing site), consider email capture. Password stays ON until launch.
 - **EAN product URLs** — bulk handle rename pre-launch (`/products/<13-digit EAN>`, mirroring the old site's `/product/<EAN>`). Blocked on duplicate barcodes + Dave's handle answer. **Check first whether Dave's newer pushes already emit EAN handles** — the `inferno-1` / `9781585101139` pairs suggest they might, which would shrink the job to the legacy cohort only. UNCONFIRMED.
 - **Exclusion mechanism is now permanent, not a one-off** — Billy sends EAN lists, we archive same day by script. Same route for publishers leaving Gazelle. Automatable by pubcode once PUBCODE is a discrete metafield.
