@@ -1,6 +1,6 @@
 {% comment %}
   Fixes single-cover product-page sizing to a consistent height with natural
-  (per-cover) width, left-aligned, plus a light book-cover shadow and a crisp
+  (per-cover) width, centred in its column, plus a light book-cover shadow and a crisp
   charcoal outline. Overrides Horizon's forced aspect-ratio: 1/1.25 and
   constrain-height cap (and its grid/flex stretch), which otherwise render
   portrait covers small/centred with empty space, or too tall.
@@ -10,6 +10,11 @@
   keep native Horizon behaviour untouched. No !important — specificity alone
   (.product-information__media .product-media-container:only-child img = 0,3,1)
   beats base.css and the media-fit-cover rule.
+
+  18 Aug 2026 — the cover is now CENTRED in its media column. This reverses the
+  8 July decision to sit it flush to the --gz-gutter left edge in line with the
+  Synopsis band's inner gutter; that alignment is deliberately given up, since a
+  bounded 400px column and a left-flush cover cannot both hold.
 
   Render on the product template, e.g. {% render 'gazelle-cover-styles' %}.
 {% endcomment %}
@@ -24,20 +29,20 @@
     max-height: 420px;                  /* hard ceiling; overrides Horizon constrain-height */
     width: auto;                        /* natural width per cover, no distortion */
     max-width: 100%;
-    margin-inline: 0;                   /* left-align (override Horizon auto-centring) */
-    margin-inline-start: var(--gz-gutter, 24px); /* match the Synopsis band's inner gutter */
+    margin-inline: auto;                /* centre in the media column */
     margin-block-start: 24px;           /* align cover top with title (details block padding-block-start: 24) */
     align-self: start;                  /* stop stretching to fill the cell */
-    justify-self: start;                /* stop stretching to fill the cell */
+    justify-self: center;               /* centre in the media column */
     overflow: visible;                  /* so the shadow isn't clipped */
   }
 
-  /* Left-align the cover inside its container: overrides the theme's
-     justify-content: center on the constrain-height constraint wrapper.
+  /* Centre the cover inside its container. This rule previously forced
+     flex-start; as of 18 Aug it matches the theme's own centring, kept explicit
+     so the intent is visible rather than relying on the core default.
      .constrain-height is required so specificity (0,4,0) beats the theme's
      .product-media-container.constrain-height:has(...) rule (0,3,0). */
   .product-information__media .product-media-container.constrain-height:only-child {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .product-information__media .product-media-container:only-child img {
@@ -63,22 +68,25 @@
     overflow: visible;
   }
 
-  /* Hero columns as a proportional centred pair (mockup: minmax(300px,1fr) 1.15fr):
-     narrows the over-stretched 1fr cover column (killing the dead middle gap) and
-     widens the buy box, instead of the native fixed 400px column pinned far right.
-     Specificity (0,4,0) beats the native (0,3,0) rule; cover stays left-aligned. */
+  /* Hero columns: cover column capped at 400px so the cover sits in a bounded,
+     centred track; buy box takes the remaining space. Replaces the earlier
+     minmax(300px,1fr) minmax(0,1.15fr) proportional pair.
+     Specificity (0,4,0) beats the native (0,3,0) rule. */
   @media screen and (min-width: 750px) {
     .product-information .product-information__grid.product-information--media-left:not(.product-information--media-none) {
-      grid-template-columns: minmax(300px, 1fr) minmax(0, 1.15fr);
+      grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
     }
   }
 
   /* Inset the buy box's right edge by the band's 24px gutter so it aligns with
      the Subjects/Classification card. margin (not padding): the details block
-     emits an inline padding-inline-end:0 that would shadow a padding override. */
+     emits an inline padding-inline-end:0 that would shadow a padding override.
+     max-width caps the measure; with the column at minmax(0,1fr) the buy box
+     stays left-aligned within it, slack falling to the right. */
   @media screen and (min-width: 750px) {
     .product-information .product-details {
       margin-inline-end: var(--gz-gutter, 24px);
+      max-width: 600px;
     }
   }
 
