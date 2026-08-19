@@ -1,33 +1,39 @@
 # STATUS — Gazelle Books
 
 _The "now" list. Open loops and next actions only. Completed work lives in DONE.md._
-_Last updated: 18 August 2026_
+_Last updated: 19 August 2026_
 
-## OVERDUE — was committed for Friday 14 August, verify what actually ran
-1. **Archive job** — four full publishers (BZ4 Edition Skylight, DB7 Tomas Horych, CU2 Jan Kowalewicz, DD2 U-Line) by pubcode substring in `tags_global` + vendor-name cross-check, plus the Edition Reuss 55 by barcode. Log counts per publisher, report the numbers to Billy. Input is `scripts/EditionReuss.xls`. **Fragile until Dave answers whether his push can un-archive.** UNCONFIRMED whether this ran on 14 Aug — check before re-running.
-2. **Discounts follow-up to Billy** — needs Grant's commercial decision (quote separately vs absorb; flagged out-of-SOW in June). Billy expected it by end of that week.
-3. **Domain / holding page confirmation to Billy.**
+## OVERDUE
+1. **Archive job** — four full publishers (BZ4 Edition Skylight, DB7 Tomas Horych, CU2 Jan Kowalewicz, DD2 U-Line) by pubcode substring in `tags_global` + vendor-name cross-check, plus the Edition Reuss 55 by barcode. Log counts per publisher, report the numbers to Billy. Input is `scripts/EditionReuss.xls`. UNCONFIRMED whether this ran on 14 Aug — check before re-running. **Do NOT let any run touch product 9783402135785 (ID 16432574726493) — that is Dave's live archive test.**
+2. **App secret rotation — OVERDUE.** The client secret was exposed again on 19 Aug. Rotate in the Dev Dashboard app credentials, then re-export `GAZELLE_CLIENT_SECRET` / `SHOPIFY_CLIENT_SECRET` before the next script run.
+3. **Discounts follow-up to Billy** — needs Grant's commercial decision (quote separately vs absorb; flagged out-of-SOW in June). Billy expected it by end of w/c 14 Aug.
+4. **Domain / holding page confirmation to Billy.**
 
 ## Blocking go-live
 - **DOMAIN — `shop.gazellebookservices.co.uk` serves "This store is unavailable".** Attached to the OLD Gazelle store whose subscription lapsed in July. **DNS CNAME is already correct → do NOT change any DNS record**; the fix is Shopify-side attachment. Order: (a) check the `gazelle-books-2026` plan status FIRST — a dev-plan gate blocks custom domains and makes it a Billy billing conversation; (b) Settings → Domains → Connect existing domain; (c) if "in use by another store", check Grant's password manager for the old store's admin login (Grant built its holding page 1 Apr 2026); (d) else Shopify support release via TXT record — names.co.uk access is held (`marvin@gazellebookservices.co.uk`, credentials in Billy's 3 Feb "Domain" email).
-- **DAVE — CRITICAL: can an update push flip an archived product back to active?** If yes, the archive job silently undoes itself and erotic titles reappear on a live store. Unanswered.
-- **DAVE — re-push the 1,057-product stale cohort.** One cohort carries every remaining data defect (overlapping: 934 blank Product Type, 548 Thema-as-names, 529 placeholder dimensions, 342 `__line:` series tokens). CSV with per-defect flags emailed 11 Aug. Chase now — no reply.
-- **DAVE — duplicate barcodes are integration-created and the hazard is live.** 20 duplicates across 42 products, handle/`-1` pairs; test stock seen landing on the WRONG listing. Asked 11 Aug what causes it. **Fix the cause before deleting anything Shopify-side.** Also gates the EAN-handle rename.
+- **Two launch-critical items sit with Dave — the archive re-activation test and the duplicates cause.** Detail under Open loops — DAVE.
 
-## Open loops — DAVE (send as ONE bundled email)
-New asks:
-- **Exclude pubcodes BZ4, DB7, CU2, DD2 at source** so the erotic titles cannot return on a re-push.
-- **Un-archive question** (see Blocking).
-- **Handle generation** — is `handle` create-only or in the update payload? Can he emit EAN handles for new pushes?
-- **NEW 18 Aug — three source-data defects:** (1) **Liberty Fund** synopses have en dashes and apostrophes stripped ("17151766", "Gods", "Englands") — per-publisher, other publishers are intact, so not a global encoding fault; (2) **Goose Lane** synopsis has the prize line jammed onto the description with the paragraph break lost ("…Historical WritingWhat happened…"); (3) `main_subjects` value "Mind, body & spirit" comma-splits into three chips — a comma inside a legitimate value is being treated as a delimiter.
-Already with him, awaiting response:
-- **Duplication cause** — 42 duplicates / 20 barcode groups, sent 11 Aug.
-- **Image failure diagnosis** — with him since **9 Jul**, silent since. 4,614 products (9.6%) have no cover; failing at Shopify fetch.
+## Open loops — DAVE
+**⚠️ Read the "asks of third parties" principle in `docs/build-manual.md` before adding anything here. Keep asks minimal and non-cumulative.** The Integration Tasks sheet is the single channel; **Dave's outstanding list has been answered in full** and the bundled-email task is closed.
+
+Launch-critical — these two only:
+1. **Archive re-activation test.** Product **9783402135785** (Aschendorff Verlag), **ID 16432574726493**, archived manually by Grant. Random pick, not on any exclusion list, 0 stock, no sales. Dave to push an update and report whether the status flips back to active. **Do not touch its status with any script until Dave reports back.** Safe to unarchive afterwards. This is the gate on whether the archive sweep silently undoes itself.
+2. **Duplicates cause** — asked 11 Aug, unanswered. 20 duplicates across 42 products, handle/`-1` pairs; test stock seen landing on the WRONG listing. Now known to be a **create collision** (Dave does not set handle; Shopify derives it), so the question is narrowed to why the same title is created twice. **Fix the cause before deleting anything Shopify-side.** Gates the EAN-handle rename.
+
+Slow-burn — in the sheet, do NOT chase separately:
+- **Cover image fetch failures.** With him since **9 Jul**, silent since. 4,614 products (9.6%) have no cover; failing at Shopify fetch.
+- **Inside spreads.** Only 64 of ~48k products have 2+ images. **~1,600 is the CEILING — that is all BooksoniX holds.** Not a sync bug, a content limit. **Tell Billy** so he isn't expecting catalogue-wide spreads.
+- **Re-push the 1,057-product stale cohort** (934 blank Product Type, 548 Thema-as-names, 529 placeholder dimensions, 342 `__line:` series tokens — one overlapping cohort, one re-push clears all four). CSV emailed 11 Aug.
 - **Taxable flag** — 312 products, file sent 11 Aug. Books should not be taxable.
-- **Internal spreads syncing** — only 64 of ~48k products have 2+ images. His record contradicts itself: "covers only" (Feb) vs "now syncing" (Jul).
-- **Archived titles** — approved-only filter + retro-sweep (asked 16 Jul), archive-not-delete (asked 3 Jul).
-- **Add `thema_top` to his push** — one line his side; until then every new product misses the subject collections.
+- **Three source-data defects (18 Aug):** Liberty Fund synopses stripped of en dashes and apostrophes (per-publisher, not a global encoding fault); Goose Lane prize line jammed onto the description with the paragraph break lost; `main_subjects` "Mind, body & spirit" comma-splitting into three chips.
 - **Escalation lever if silence continues: Paul Theijs.**
+
+Parked — not a launch blocker, do not re-raise:
+- **Pubcode exclusion at source.** Grant's archive sweep covers the same ground our side.
+
+Grant-owned, NO ask to Dave:
+- **EAN handles** — Dave does not set `handle`, so a bulk rename is safe from clobber. Ours to script.
+- **`thema_top`** — stays on `scripts/populate_thema_top.py` re-runs until Dave maps it natively.
 
 Carried, lower priority:
 - **Load completion / catalogue count UNCONFIRMED.** API reports 49,363 (later 49,367) vs 48,220 in the same-morning export — ~1,143 gap, cause UNCONFIRMED (export likely ran mid-sync).
@@ -35,14 +41,21 @@ Carried, lower priority:
 - **255 future-dated titles are live.** Same UNCONFIRMED caveat. Billy's answer on desired behaviour still owed.
 - **Nova Science publisher name has 3 variants across ~20k products** — fragments the imprint filter. Source normalisation, not urgent.
 
+## Data pipeline — pubcode
+- **`custom.pubcode` definition created 19 Aug** — single line text, `smartCollectionCondition` enabled, `adminFilterable` on. **Empty on every product until Dave's first push maps it.**
+- Value spec given to Dave: **bare code only** (`CE1`), lowercase key `custom.pubcode`.
+- **When his first push populates it, spot-check the value format BEFORE wiring the discount rule or any exclusion collection to it.** A value arriving in the long `CE1 - LINDEN PUBLISHING INC` form silently breaks an equals-based smart collection.
+- **Until then the `tags_global` parse stays the working source** — do not rip it out early.
+
 ## Open loops — BILLY
+- **Inside spreads expectation** — tell him ~1,600 titles is the ceiling, not the catalogue. — since 19 Aug
 - **Low-stock threshold** — confirm the number (native default 10 is in place) **and** whether to show the exact count ("3 left") or the generic "Low stock" (currently generic). — since 18 Aug
 - **Trust strip copy** — returns window + delivery tiers to replace the `Returns [TBC]` placeholder, and confirm "Free UK delivery over £20" (**the announcement bar says £20, the June mockup said £25** — they contradict). — since 18 Aug
 - **Author link target** — there is no author collection or facet, so `/search?q=` is the only natively resolvable target. — since 18 Aug
 - **Clickable Publisher deferred** — `custom.publisher` has no native link target (no publisher facet, no publisher collection). Imprint is done via `product.vendor` → `/collections/vendors?q=`. Needs a facet or a collection scheme before Publisher can be linked. — since 18 Aug
 - **Remaining "Website Points" items** — he said 12 Aug he would come back.
 - **Older open decisions:** subject nav labels + main-nav picks; Mixed-media product (126 titles, absent from his 28 May combine list); Trajan Pro licensing; behaviour for future-dated titles; policy-page facts (registered address, company + VAT numbers, returns window, who pays return postage, delivery tiers/rates, despatch cut-off, UK-only vs international); catalogue count nod.
-- **Discounts** — expects a follow-up. He believed the 25% RRP automation was live; corrected 12 Aug to agreed-but-not-built, blocked on PUBCODE.
+- **Discounts** — expects a follow-up. He believed the 25% RRP automation was live; corrected 12 Aug to agreed-but-not-built, blocked on PUBCODE values landing.
 - **Security recommendation** — names.co.uk password was sent plaintext and is weak. Recommend he rotates it and enables 2FA **before go-live**.
 - **Product-page preview + go-live framing.** Owed since 20 Jul. **The page is now presentable** — send it once the panel/spacing tune under OURS is done.
 - **Ebook exclusion scope.** He excluded ONIX 14 (Digital, delivered electronically) but not 21 (Electronic book text) or 20 (E-book reader). One-line question: should 21 also be excluded?
@@ -60,8 +73,8 @@ Carried, lower priority:
 - **Synopsis "Read more" clamp** (~10 lines) in the detail-band IIFE. — parked
 - **DECISION STILL OWED: is Claude Code auto mode / agent-executed live pushes acceptable?** Auto mode was re-enabled twice on 18 Aug via the setup dialogue; on both occasions **pushes stayed manual and none was agent-executed**. Given GSD Gazelle Build is the **published** theme, an agent-executed push would be live to anyone with the store password. Switch auto mode off and write the policy down.
 - **Holding page** — customise `templates/password.liquid`: logo, "New bookshop launching late August" (matches the marketing site), consider email capture. Password stays ON until launch.
-- **EAN product URLs** — bulk handle rename pre-launch (`/products/<13-digit EAN>`, mirroring the old site's `/product/<EAN>`). Blocked on duplicate barcodes + Dave's handle answer. **Check first whether Dave's newer pushes already emit EAN handles** — the `inferno-1` / `9781585101139` pairs suggest they might, which would shrink the job to the legacy cohort only. UNCONFIRMED.
-- **Exclusion mechanism is now permanent, not a one-off** — Billy sends EAN lists, we archive same day by script. Same route for publishers leaving Gazelle. Automatable by pubcode once PUBCODE is a discrete metafield.
+- **EAN product URLs** — bulk handle rename pre-launch (`/products/<13-digit EAN>`, mirroring the old site's `/product/<EAN>`). Confirmed safe from clobber (Dave does not set handle). Still blocked on the duplicate barcodes. **Check first whether Dave's newer pushes already produce EAN-shaped handles** — the `inferno-1` / `9781585101139` pairs suggest they might, which would shrink the job to the legacy cohort only. UNCONFIRMED.
+- **Exclusion mechanism is now permanent, not a one-off** — Billy sends EAN lists, we archive same day by script. Same route for publishers leaving Gazelle. Automatable by pubcode once `custom.pubcode` carries values.
 - **Build the subject nav menu.** `write_online_store_navigation` scope held, so scriptable. Gated on Billy's labels. Kills the **"Catagories" typo** in the placeholder menu — that must not ship.
 - **Re-run `scripts/populate_thema_top.py`** after Dave's re-push, against a fresh export, to sweep in the stale cohort and the ~1,143 export-gap products.
 - **UNCONFIRMED whether these were done in the 11 Aug session** — verify before assuming: Format and Subject filters added in Search & Discovery; the 4 policy pages pasted into admin.
@@ -77,17 +90,18 @@ Carried, lower priority:
 - **GSD Gazelle Build #205873021277 is the ACTIVE/PUBLISHED theme** on the dev store (behind password). Every editor save and every CLI push is live to anyone with the password.
 - **`origin` is now SSH** (`git@github.com:gsdworks/gazelle-horizon.git`) — the old "HTTPS push fails, use GitHub Desktop" constraint no longer applies.
 - **Live domain is `shop.gazellebookservices.co.uk`** — agreed 3 Feb 2026, reconfirmed by Billy 13 Aug. `store.gazellebooks.co.uk` was never the target; it was a stale string carried for six months.
-- **Scripts authenticate via the "GSD Scripts" custom app** (Dev Dashboard + client credentials grant). No static tokens — every run exchanges client id/secret for a short-lived token. Legacy Settings custom apps deprecated 1 Jan 2026.
-- **Smart collections on metafields: "is equal to" only.** `list.single_line_text_field` works (equals matches any list entry) and the definition needs the `smartCollectionCondition` capability. Prefix matching is impossible — derive the exact value instead. This is why `thema_top` exists.
+- **Scripts authenticate via the "GSD Scripts" custom app** (Dev Dashboard + client credentials grant). No static tokens — every run exchanges client id/secret for a short-lived token. Legacy Settings custom apps deprecated 1 Jan 2026. **Secret rotation is overdue — see OVERDUE.**
+- **`scripts/create_gazelle_metafields.py` is now committed** (was loose in Downloads). Idempotent — existing definitions report `TAKEN` and are skipped; `--dry-run` prints the plan with no API calls.
+- **Smart collections on metafields: "is equal to" only.** `list.single_line_text_field` works (equals matches any list entry) and the definition needs the `smartCollectionCondition` capability. Prefix matching is impossible — derive the exact value instead. This is why `thema_top` exists, and why `pubcode`'s value format has to be checked before anything is wired to it.
 - **Run glob scripts against an isolated folder, never Downloads** — 127 accumulated CSVs there, and one stale non-UTF-8 file crashed a run. Current exports live in `~/Downloads/export-11aug`. Mac system Python is 3.9 with old pip (no `--break-system-packages`); consider brew Python.
 - **Tick the Tags column in Matrixify export settings** — missing again on 11 Aug, which silently removes any ability to check PUBCODE.
 - **Gmail connector is NOT trustworthy for negative results on this project.** A search returning nothing is not evidence of silence — verify with `get_thread` on a known thread before concluding a client hasn't replied.
 - **Run a digest after any client exchange that changes state**, not only at session end.
 - Store is unbuyable until Fred's stock feed runs — inventory qty=0 store-wide (tracked, policy deny). Known cause, not Dave.
-- Native Tags blank — PUBCODE remains buried inside `tags_global`. Homepage curation, discount automation and automated pubcode exclusion ALL block on surfacing it discretely.
+- Native Tags blank — PUBCODE remains buried inside `tags_global` until Dave maps `custom.pubcode`. Homepage curation and discount automation still block on real values landing.
 - `custom.format` and `custom.genre` — 2 products each, undefined keys not in the 23-field contract. Unexplained. Clean when convenient.
 - Handles carrying a `-N` suffix are **not** in themselves a finding — but the handle/`-1` duplicate-barcode pairs ARE. Don't conflate the two.
-- BooksoniX Integration app client secret may have been rotated by Dave — UNVERIFIED.
+- BooksoniX Integration app client secret may have been rotated by Dave — UNVERIFIED. Distinct from our own overdue rotation above.
 - Shopify CLI now **4.6.0**. If a CLI command behaves oddly for no reason, check the version first.
 - Gazelle is a **fork** of `Shopify/horizon` and is the only one there will ever be (one fork per upstream per account). Future GSD projects use a plain repo + mirror-push + `upstream` remote. Do not "harmonise" Gazelle to that shape.
 - Context system: drag PROJECT-CONTEXT.md into claude.ai project knowledge after each `/update-context`.

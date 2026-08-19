@@ -27,6 +27,15 @@ Rules that follow from this:
 - **Close-enough beats perfect.** If native Horizon gets ~90% of a mockup detail, take the 90% rather than burning hours on custom code for the last 10% — **unless** it's a confirmed business rule (no-save messaging, no back orders, create-only price), which always wins over the mockup.
 - **This is forward-looking.** It does not mean re-doing already-built work to be "more native." Leave built sections alone (see "Already built").
 
+## Working principles — asks of third parties
+
+**Minimise asks of Dave Hyman.** He was paid roughly **£500** for the BooksoniX integration, it has dragged on for months, and he is frustrated. Every additional question spends goodwill we may need for something genuinely blocking.
+
+- **Before putting anything to Dave, check whether it can be done Shopify-side by script.** Most of what looks like a source-data ask (handle renames, `thema_top` backfill, archiving, exclusions) is ours to do with the Admin API and the "GSD Scripts" app.
+- **Only put things to him that genuinely cannot be done our side** — cause-of-defect questions, things that must change in BooksoniX itself.
+- **Keep those asks minimal and non-cumulative.** Do not append a new question to a still-unanswered list; a growing tail of asks reads as an escalating demand and lowers the chance any of them gets answered.
+- Prefer parking a nice-to-have over asking. `pubcode` exclusion at source was parked on exactly this basis — Grant's sweep covers it.
+
 ## Agent execution rules (Claude Code)
 
 - Do **exactly** the task asked. Nothing more. No refactors, no extra features, no unrequested "improvements", no tidying of unrelated files.
@@ -150,11 +159,18 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 - `thema_subjects` / `bic_subjects` — codes are the norm now; **548 records still in name format**, all inside the stale cohort. Front end was already wired correctly; nothing to change.
 - **`product.type` HAS LANDED — 98.1% COVERAGE as of 11 Aug, values verified against Billy's 28 May combine list.** This reverses the 3 Aug entry that said it was empty on 98.1% (the numbers are a coincidence — that was 98.1% *blank*, this is 98.1% *populated*). **The Format filter is live.** Residual: 934 blank (stale cohort), plus value decisions pending with Billy — `Mixed-media product` ×126 (absent from his combine list), `Undefined` ×12, `Pamphlet` ×1 (should be Paperback).
 
-**`custom.pubcode` does not exist yet.** PUBCODE is currently only a substring inside `tags_global` (`PUBCODE: CE1 - LINDEN PUBLISHING INC`). Do not build anything that depends on a discrete pubcode metafield.
+**`custom.pubcode` EXISTS as of 19 Aug — but is EMPTY.** `single_line_text_field`, created by `scripts/create_gazelle_metafields.py`, with `smartCollectionCondition` enabled and `adminFilterable` switched on in admin. **Dave has not mapped it yet, so it is blank on every product.** Value spec given to him: **bare code only** (`CE1`), not the `CE1 - LINDEN PUBLISHING INC` form, key lowercase `custom.pubcode`. **Until his first push populates it, the `tags_global` substring parse (`PUBCODE: CE1 - LINDEN PUBLISHING INC`) remains the working source** — keep it. When the first populated push lands, **spot-check the actual value format before wiring the discount rule or any exclusion collection to it**; a value arriving in the long form silently breaks an equals-based smart collection.
 
 **`custom.thema_top` — a 24th field, OURS not Dave's (created 11 Aug).** `list.single_line_text_field` with the `smartCollectionCondition` capability, holding the top-level letters derived from the Thema codes. It exists because **smart-collection metafield conditions support ONLY "is equal to"** — prefix matching is impossible, so the value you want to match has to be derived and stored. (Equals against a list field matches if any entry matches.) Backfilled onto 47,247 products by `scripts/populate_thema_top.py`. **It is NOT self-maintaining:** products arriving from Dave have no `thema_top` and silently miss the subject collections until the script is re-run. The fix is Dave pushing the field natively — until then, re-run the script after any significant load. Reuse this derive-then-equals pattern for any future taxonomy collection.
 
 **Data expectations:** many fields render empty until BooksoniX populates them. That is expected and fine. Empty rows hide.
+
+### Data pipeline — confirmed facts (19 Aug, from Dave)
+
+- **Dave does not set `handle`.** Shopify derives it from the title on create. Two consequences: **a bulk handle rename is safe from clobber** (an update push will not overwrite it), and **the `-1` duplicate handles are a create-collision symptom**, not a handle-generation choice.
+- **Only Approved BooksoniX records sync.** Anything not Approved his side never reaches Shopify.
+- **`custom.pubcode` exists** (see the metafield contract above) — created our side, empty until Dave maps it.
+- **`scripts/create_gazelle_metafields.py` now lives in `scripts/` and is committed.** It was previously loose in Downloads. Re-runnable and idempotent (existing definitions report `TAKEN` and are skipped); `--dry-run` prints the plan with no API calls.
 
 ## Native field map (what's native vs metafield)
 
