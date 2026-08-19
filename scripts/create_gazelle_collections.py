@@ -6,8 +6,8 @@ via the Shopify Admin GraphQL API, then publishes them to the Online Store chann
 
 Auth (Dev Dashboard app, post-Jan-2026 flow — client credentials grant):
   export SHOPIFY_STORE="gazelle-books-2026.myshopify.com"
-  export SHOPIFY_CLIENT_ID="..."       # from the Dev Dashboard app's credentials
-  export SHOPIFY_CLIENT_SECRET="..."   # ditto
+  export GAZELLE_CLIENT_ID="..."       # from the Dev Dashboard app's credentials
+  export GAZELLE_CLIENT_SECRET="..."   # ditto
 App must be installed on the store with write_products + write_publications scopes.
 
 Run:  python3 create_gazelle_collections.py
@@ -16,13 +16,13 @@ Idempotent: skips any collection whose handle already exists.
 import os, sys, json, requests
 
 STORE = os.environ.get("SHOPIFY_STORE", "gazelle-books-2026.myshopify.com")
-CLIENT_ID = os.environ.get("SHOPIFY_CLIENT_ID")
-CLIENT_SECRET = os.environ.get("SHOPIFY_CLIENT_SECRET")
+CLIENT_ID = os.environ.get("GAZELLE_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("GAZELLE_CLIENT_SECRET")
 API_VERSION = "2026-07"
 URL = f"https://{STORE}/admin/api/{API_VERSION}/graphql.json"
 
 if not (CLIENT_ID and CLIENT_SECRET):
-    sys.exit("Set SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET first (Dev Dashboard app credentials).")
+    sys.exit("Set GAZELLE_CLIENT_ID and GAZELLE_CLIENT_SECRET first (Dev Dashboard app credentials).")
 
 def get_token():
     """Exchange client credentials for a short-lived Admin API access token."""
@@ -193,7 +193,191 @@ def delete_stale():
             deleted += 1
     print(f"deleted={deleted} already_gone={missing}\n")
 
+# ---------------------------------------------------------------------------
+# LEVEL-2 SUB-COLLECTIONS (19 Aug) - run with --l2
+#
+# 124 second-level subject collections under the existing top-level ones,
+# keyed on custom.thema_l2, built with exactly the derive-then-equals pattern
+# that built the top level: smart-collection metafield rules support ONLY
+# "is equal to", so the matchable value has to be derived and stored first.
+#
+#   python3 create_gazelle_collections.py --l2 --dry-run
+#   python3 create_gazelle_collections.py --l2
+#   python3 create_gazelle_collections.py --l2 --counts /path/to/thema_l2_counts.csv
+#
+# The counts CSV is the SOURCE OF TRUTH for which codes get a collection
+# (every row where keep == True). It is not re-derived here. Default is the
+# 19 Aug file; populate_thema_top.py writes a fresh one to scripts/out/ on
+# every run as the recurring check, but that one does not drive creation
+# unless it is passed explicitly.
+# ---------------------------------------------------------------------------
+import csv, re as _re
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_COUNTS = os.path.expanduser("~/Downloads/thema_l2_counts.csv")
+LABELS_PATH = os.path.join(HERE, "thema_labels_en_v1.6.json")
+
+COLLECTION_Q = """
+query($q: String!) {
+  collections(first: 1, query: $q) { nodes { id handle title sortOrder } }
+}"""
+
+DEF_ANY_Q = """
+query($ownerType: MetafieldOwnerType!, $key: String!) {
+  metafieldDefinitions(first: 1, ownerType: $ownerType,
+                       namespace: "custom", key: $key) {
+    nodes { id name }
+  }
+}"""
+
+def ensure_definition(key, name, mtype, owner_type, smart_collection=False):
+    """Create a custom.<key> definition if absent. Returns its id."""
+    nodes = gql(DEF_ANY_Q, {"ownerType": owner_type, "key": key})["metafieldDefinitions"]["nodes"]
+    if nodes:
+        print(f"DEF   custom.{key} exists ({nodes[0]['id']})")
+        return nodes[0]["id"]
+    d = {"name": name, "namespace": "custom", "key": key,
+         "type": mtype, "ownerType": owner_type}
+    if smart_collection:
+        # Cannot be added retrospectively in the admin UI - it has to be set
+        # at create time or the definition is useless for collection rules.
+        d["capabilities"] = {"smartCollectionCondition": {"enabled": True}}
+    res = gql(DEF_CREATE_M, {"definition": d})["metafieldDefinitionCreate"]
+    if res["userErrors"]:
+        sys.exit(f"Definition create failed for custom.{key}: {res['userErrors']}")
+    did = res["createdDefinition"]["id"]
+    print(f"DEF   custom.{key} created ({did})")
+    return did
+
+def slugify(s):
+    s = s.lower().replace("&", " and ")
+    s = _re.sub(r"[^a-z0-9]+", "-", s)
+    return _re.sub(r"-+", "-", s).strip("-")
+
+def load_labels():
+    with open(LABELS_PATH, encoding="utf-8") as f:
+        return json.load(f)["labels"]
+
+def load_kept(counts_path):
+    with open(counts_path, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    kept = [r for r in rows if str(r.get("keep", "")).strip().lower() == "true"]
+    print(f"counts CSV: {counts_path}")
+    print(f"  {len(rows)} L2 groups, {len(kept)} kept (keep == True)")
+    return kept
+
+def parent_map():
+    """letter -> the top-level collection as it exists IN THE STORE.
+
+    Handles come from SUBJECT_COLLECTIONS above; everything else (id, title,
+    sortOrder) is read from the store, so a Billy retitle does not break this.
+    """
+    out = {}
+    for letter, _title, handle in SUBJECT_COLLECTIONS:
+        nodes = gql(COLLECTION_Q, {"q": f"handle:{handle}"})["collections"]["nodes"]
+        if nodes:
+            out[letter] = nodes[0]
+    return out
+
+def build_l2():
+    argv = sys.argv
+    dry = "--dry-run" in argv
+    counts_path = DEFAULT_COUNTS
+    if "--counts" in argv:
+        counts_path = argv[argv.index("--counts") + 1]
+    if not os.path.exists(counts_path):
+        sys.exit(f"Counts CSV not found: {counts_path}")
+
+    labels = load_labels()
+    kept = load_kept(counts_path)
+
+    parents = parent_map()
+    print(f"top-level collections found in store: {len(parents)} "
+          f"({''.join(sorted(parents))})")
+    orphan_letters = sorted({r['top'] for r in kept} - set(parents))
+    if orphan_letters:
+        sys.exit(f"STOP: kept L2 codes reference top-level letters with no "
+                 f"collection in the store: {orphan_letters}. Create those first.")
+
+    no_label = [r["l2"] for r in kept if r["l2"] not in labels]
+    if no_label:
+        print(f"NOTE: {len(no_label)} codes have no Thema heading, falling back "
+              f"to the bare code: {no_label}")
+
+    if dry:
+        print("\nDRY RUN - no writes. Planned collections:\n")
+        for r in kept:
+            p = parents[r["top"]]
+            title = labels.get(r["l2"], r["l2"])
+            print(f"  {r['l2']:<3} {title[:52]:<54} "
+                  f"{p['handle']}-{slugify(title)}  ({r['products']} products)")
+        print(f"\n{len(kept)} collections would be created. "
+              f"Re-run without --dry-run to create them.")
+        return
+
+    def_id = ensure_definition("thema_l2", "Thema Level-2 Subjects",
+                               "list.single_line_text_field", "PRODUCT",
+                               smart_collection=True)
+    ensure_definition("parent_handle", "Parent Collection Handle",
+                      "single_line_text_field", "COLLECTION")
+
+    pubs = gql(PUBLICATIONS_Q)["publications"]["nodes"]
+    online = next((p for p in pubs if p["name"] == "Online Store"), None)
+    if not online:
+        sys.exit(f"Online Store publication not found. Publications: {[p['name'] for p in pubs]}")
+
+    created, skipped, failed = 0, 0, 0
+    for r in kept:
+        parent = parents[r["top"]]
+        title = labels.get(r["l2"], r["l2"])
+        # The handle is a URL and outlives the code, so it is built from the
+        # heading, never from the bare code. Matching on handle (not title)
+        # is what lets Billy retitle without a re-run creating duplicates.
+        handle = f"{parent['handle']}-{slugify(title)}"
+
+        existing = gql(EXISTING_Q, {"q": f"handle:{handle}"})["collections"]["nodes"]
+        if existing:
+            print(f"SKIP  {r['l2']:<3} {title[:40]:<42} (handle exists)")
+            skipped += 1
+            continue
+
+        inp = {
+            "title": title,
+            "handle": handle,
+            "sortOrder": parent["sortOrder"],
+            "ruleSet": {"appliedDisjunctively": False, "rules": [{
+                "column": "PRODUCT_METAFIELD_DEFINITION",
+                "relation": "EQUALS",
+                "condition": r["l2"],
+                "conditionObjectId": def_id,
+            }]},
+            "metafields": [{
+                "namespace": "custom",
+                "key": "parent_handle",
+                "type": "single_line_text_field",
+                "value": parent["handle"],
+            }],
+        }
+        res = gql(CREATE_M, {"input": inp})["collectionCreate"]
+        if res["userErrors"]:
+            print(f"FAIL  {r['l2']:<3} {title[:40]:<42} {res['userErrors']}")
+            failed += 1
+            continue
+        pub = gql(PUBLISH_M, {"id": res["collection"]["id"],
+                              "input": [{"publicationId": online["id"]}]})
+        errs = pub["publishablePublish"]["userErrors"]
+        note = f" (publish errors: {errs})" if errs else ""
+        print(f"OK    {r['l2']:<3} {title[:40]:<42} -> {handle}{note}")
+        created += 1
+
+    print(f"\nL2 done. created={created} skipped={skipped} failed={failed}")
+    print("Verify in admin: Products > Collections. Compare a sample of product "
+          "counts against the products column in the counts CSV.")
+
 def main():
+    if "--l2" in sys.argv:
+        build_l2()
+        return
     delete_stale()
     def_id = ensure_thema_top_definition()
     # Find the Online Store publication once

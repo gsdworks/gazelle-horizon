@@ -14,7 +14,7 @@ and are skipped, nothing is overwritten or deleted.
 -------------------------------------------------------------------------------
 HOW TO RUN (macOS terminal):
 
-  export GAZELLE_CLIENT_ID='5e994c135911baa59f413b9ac8d79992'
+  export GAZELLE_CLIENT_ID='<the client id from Dev Dashboard > Settings>'
   export GAZELLE_CLIENT_SECRET='<the secret from Dev Dashboard > Settings>'
   python3 create_gazelle_metafields.py
 
