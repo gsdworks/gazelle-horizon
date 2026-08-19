@@ -11,10 +11,15 @@ merch collections.
   python3 scripts/build_gazelle_menu.py --dry-run
   python3 scripts/build_gazelle_menu.py
 
-Shape: 7 level-1 groups, 24 level-2 columns (20 subject + 4 merch),
-126 level-3 links (106 children + one "All <parent>" per subject column).
-Horizon renders this as a mega menu: L1 in the header bar, L2 as column
-headings, L3 as the links under them.
+Shape: 8 level-1 groups, 31 level-2 columns (20 subject + 4 merch + 7 brand
+-site links), 126 level-3 links (106 children + one "All <parent>" per
+subject column). Horizon renders this as a mega menu: L1 in the header bar,
+L2 as column headings, L3 as the links under them.
+
+L1 labels are deliberately SHORT. The first version used descriptive labels
+("Science, technology and medicine") and seven of them overflowed Horizon's
+header bar into a "More" item. Keep new L1 labels to roughly one or two
+words.
 
 ⚠️ THREE LEVELS IS THE CEILING. Shopify documents menu nesting as "up to
 three levels deep" and this tree already uses all three. A fourth tier is
@@ -65,34 +70,34 @@ _spec.loader.exec_module(GZ)
 # live as filter/landing collections. Do not add them here.
 # ---------------------------------------------------------------------------
 GROUPS = [
-    ("Fiction and literature", "F", [
+    ("Fiction", "F", [
         ("F", "FB FJ FV FH FM FF FL FR"),
         ("D", "DN DC DS DD DB"),
         ("X", "XA XQ"),
     ]),
-    ("Children's and young adult", "Y", [
+    ("Children's", "Y", [
         ("Y", "YN YF YB YP YX YD"),
     ]),
-    ("Arts and humanities", "A", [
+    ("Arts & humanities", "A", [
         ("A", "AG AJ AK AT AM AV AF AB"),
         ("N", "NH NK"),
         ("Q", "QR QD"),
         ("C", "CJ CF CB"),
     ]),
-    ("Science, technology and medicine", "M", [
+    ("Science & medicine", "M", [
         ("P", "PS PH PN PB PD PG"),
         ("T", "TQ TH TG TD TV TB TJ TT"),
         ("M", "MB MJ MK MF MN MQ MX MZ"),
         ("U", "UY UM UN UB UD UR UT UF"),
         ("R", "RN RB RG RP"),
     ]),
-    ("Society, business and law", "J", [
+    ("Society & business", "J", [
         ("J", "JB JP JN JM JH JW JK"),
         ("K", "KC KJ KN KF"),
         ("L", "LN LA LB"),
         ("G", "GT GB GL GP"),
     ]),
-    ("Lifestyle, health and leisure", "W", [
+    ("Lifestyle", "W", [
         ("W", "WN WT WD WB WG WM WQ WH"),
         ("V", "VX VF VS"),
         ("S", "SF SC SZ SR SV ST SP"),
@@ -100,9 +105,24 @@ GROUPS = [
 ]
 
 # The merch group: level-2 items only, no children.
-MERCH_GROUP_LABEL = "Gifts and stationery"
+MERCH_GROUP_LABEL = "Gifts & stationery"
 MERCH_ORDER = ["cards-stationery", "posters-wallcharts", "music-audio", "maps"]
 MERCH_L1_HANDLE = "cards-stationery"
+
+# Level-1 group of links out to the brand site. type HTTP, not COLLECTION -
+# note MenuItemType has NO "URL" value; HTTP is the enum for an external link.
+# Edit these here; nothing else needs changing.
+EXTERNAL_LINKS_LABEL = "Trade & publishers"
+EXTERNAL_LINKS_URL = "https://gazellebookservices.co.uk/"
+EXTERNAL_LINKS = [
+    ("Publishers",            "https://gazellebookservices.co.uk/publishers"),
+    ("Retailers",             "https://gazellebookservices.co.uk/retailers"),
+    ("Open a trade account",  "https://gazellebookservices.co.uk/trade-account"),
+    ("Catalogues",            "https://gazellebookservices.co.uk/catalogues"),
+    ("News",                  "https://gazellebookservices.co.uk/blog"),
+    ("About Gazelle",         "https://gazellebookservices.co.uk/about"),
+    ("Contact",               "https://gazellebookservices.co.uk/contact"),
+]
 
 # Trailing "All ..." item in every subject column.
 ALL_LABEL = {
@@ -242,6 +262,16 @@ def build_tree(resolve):
         n2 += 1
     items.append(merch)
 
+    # Level 1: out to the brand site. External links resolve to nothing in the
+    # store, so they bypass node() and its missing-handle check entirely.
+    ext = {"title": EXTERNAL_LINKS_LABEL, "type": "HTTP",
+           "url": EXTERNAL_LINKS_URL, "items": []}
+    n1 += 1
+    for title, url in EXTERNAL_LINKS:
+        ext["items"].append({"title": title, "type": "HTTP", "url": url})
+        n2 += 1
+    items.append(ext)
+
     if missing:
         print("\nSTOP: these handles do not exist in the store - a menu with "
               "holes was NOT created:")
@@ -282,7 +312,7 @@ def main():
 
     if dry:
         print_tree(items)
-        print(f"\nL1 {n1}   L2 {n2}   L3 {n3}   (expected 7 / 24 / 126)")
+        print(f"\nL1 {n1}   L2 {n2}   L3 {n3}   (expected 8 / 31 / 126)")
         print("DRY RUN - nothing was written.")
         return
 
