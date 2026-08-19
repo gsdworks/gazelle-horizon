@@ -38,8 +38,10 @@ CLIENT_SECRET = os.environ.get("GAZELLE_CLIENT_SECRET")
 # The definitions to create.  (key, type, human-readable name)
 # Types are deliberately text now so they ADOPT Dave's current output cleanly.
 # The 5 already created manually (publication_date, isbn, author, publisher,
-# language) are intentionally NOT listed here.  pubcode is held until Dave
-# surfaces it as its own field.
+# language) are intentionally NOT listed here.
+# Keys listed in SMART_COLLECTION_KEYS additionally get the
+# smartCollectionCondition capability (same input shape as custom.thema_top in
+# create_gazelle_collections.py) so they can drive smart-collection rules.
 # ---------------------------------------------------------------------------
 DEFINITIONS = [
     ("subtitle",            "single_line_text_field", "Subtitle"),
@@ -60,7 +62,13 @@ DEFINITIONS = [
     ("prize_achievements",  "multi_line_text_field",  "Prize Achievements"),
     ("tags_global",         "single_line_text_field", "Tags (global)"),
     ("reviews",             "multi_line_text_field",  "Reviews"),
+    ("pubcode",             "single_line_text_field", "PUBCODE"),
 ]
+
+# Definitions that must be usable as a smart-collection condition.
+# Smart-collection metafield rules support ONLY "is equal to", and the
+# capability cannot be added retrospectively in the admin UI.
+SMART_COLLECTION_KEYS = {"pubcode"}
 
 NAMESPACE = "custom"
 OWNER_TYPE = "PRODUCT"
@@ -124,7 +132,8 @@ def main():
         print(f"Namespace   : {NAMESPACE}   Owner: {OWNER_TYPE}")
         print(f"\nWould create {len(DEFINITIONS)} definitions:\n")
         for key, mtype, name in DEFINITIONS:
-            print(f"  {NAMESPACE}.{key:<20} {mtype:<24} \"{name}\"")
+            cap = "  + smartCollectionCondition" if key in SMART_COLLECTION_KEYS else ""
+            print(f"  {NAMESPACE}.{key:<20} {mtype:<24} \"{name}\"{cap}")
         print(f"\nRe-run without --dry-run to create these.")
         return
 
@@ -132,13 +141,18 @@ def main():
 
     created, skipped, failed = 0, 0, 0
     for key, mtype, name in DEFINITIONS:
-        variables = {"definition": {
+        definition = {
             "name": name,
             "namespace": NAMESPACE,
             "key": key,
             "type": mtype,
             "ownerType": OWNER_TYPE,
-        }}
+        }
+        if key in SMART_COLLECTION_KEYS:
+            definition["capabilities"] = {
+                "smartCollectionCondition": {"enabled": True}
+            }
+        variables = {"definition": definition}
         try:
             resp = graphql(token, MUTATION, variables)
         except urllib.error.HTTPError as e:
