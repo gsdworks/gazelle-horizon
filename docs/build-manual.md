@@ -27,6 +27,13 @@ Rules that follow from this:
 - **Close-enough beats perfect.** If native Horizon gets ~90% of a mockup detail, take the 90% rather than burning hours on custom code for the last 10% — **unless** it's a confirmed business rule (no-save messaging, no back orders, create-only price), which always wins over the mockup.
 - **This is forward-looking.** It does not mean re-doing already-built work to be "more native." Leave built sections alone (see "Already built").
 
+## Credentials — which app the scripts run under
+
+- **All `scripts/` run under the "GSD Gazelle Scripts" custom app** (client ID `9c1cdb65353e42b36432a5d185e24199` — an identifier, not a secret; 26 scopes, installed on `gazelle-books-2026`). Client-credentials grant, short-lived token per run, no static `shpat_`.
+- **⚠️ NEVER run our scripts under the "BooksoniX Integration" app.** That one is **Dave's**, and it **lacks `write_publications`** — it cannot publish a collection to the Online Store channel, so a collection run under it would create unpublished collections. The 11 Aug collection run must therefore have used a different app than its docstring named.
+- Env vars are standardised across every script: **`SHOPIFY_STORE`** (full `*.myshopify.com` domain), **`GAZELLE_CLIENT_ID`**, **`GAZELLE_CLIENT_SECRET`**.
+- **⚠️ 19 Aug: the BooksoniX Integration client id AND secret were found exported in the environment Claude Code inherits.** `verify_l2.py` hard-refuses to run if it sees that client id. Check what a terminal is carrying before running anything: the app a script authenticates as is decided by whatever happens to be exported, not by intent.
+
 ## Working principles — asks of third parties
 
 **Minimise asks of Dave Hyman.** He was paid roughly **£500** for the BooksoniX integration, it has dragged on for months, and he is frustrated. Every additional question spends goodwill we may need for something genuinely blocking.
@@ -159,7 +166,7 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 - `thema_subjects` / `bic_subjects` — codes are the norm now; **548 records still in name format**, all inside the stale cohort. Front end was already wired correctly; nothing to change.
 - **`product.type` HAS LANDED — 98.1% COVERAGE as of 11 Aug, values verified against Billy's 28 May combine list.** This reverses the 3 Aug entry that said it was empty on 98.1% (the numbers are a coincidence — that was 98.1% *blank*, this is 98.1% *populated*). **The Format filter is live.** Residual: 934 blank (stale cohort), plus value decisions pending with Billy — `Mixed-media product` ×126 (absent from his combine list), `Undefined` ×12, `Pamphlet` ×1 (should be Paperback).
 
-**`custom.pubcode` EXISTS as of 19 Aug — but is EMPTY.** `single_line_text_field`, created by `scripts/create_gazelle_metafields.py`, with `smartCollectionCondition` enabled and `adminFilterable` switched on in admin. **Dave has not mapped it yet, so it is blank on every product.** Value spec given to him: **bare code only** (`CE1`), not the `CE1 - LINDEN PUBLISHING INC` form, key lowercase `custom.pubcode`. **Until his first push populates it, the `tags_global` substring parse (`PUBCODE: CE1 - LINDEN PUBLISHING INC`) remains the working source** — keep it. When the first populated push lands, **spot-check the actual value format before wiring the discount rule or any exclusion collection to it**; a value arriving in the long form silently breaks an equals-based smart collection.
+**`custom.pubcode` EXISTS as of 19 Aug — but is EMPTY.** `single_line_text_field`, **created by us** on 19 Aug via `scripts/create_gazelle_metafields.py` (recorded in DONE.md — if anyone later finds it in admin and wonders where it came from, that is the answer), with `smartCollectionCondition` enabled and `adminFilterable` switched on in admin. **Dave has not mapped it yet, so it is blank on every product.** Value spec given to him: **bare code only** (`CE1`), not the `CE1 - LINDEN PUBLISHING INC` form, key lowercase `custom.pubcode`. **Until his first push populates it, the `tags_global` substring parse (`PUBCODE: CE1 - LINDEN PUBLISHING INC`) remains the working source** — keep it. When the first populated push lands, **spot-check the actual value format before wiring the discount rule or any exclusion collection to it**; a value arriving in the long form silently breaks an equals-based smart collection.
 
 **`custom.thema_top` — a 24th field, OURS not Dave's (created 11 Aug).** `list.single_line_text_field` with the `smartCollectionCondition` capability, holding the top-level letters derived from the Thema codes. It exists because **smart-collection metafield conditions support ONLY "is equal to"** — prefix matching is impossible, so the value you want to match has to be derived and stored. (Equals against a list field matches if any entry matches.) Backfilled onto 47,247 products by `scripts/populate_thema_top.py`. **It is NOT self-maintaining:** products arriving from Dave have no `thema_top` and silently miss the subject collections until the script is re-run. The fix is Dave pushing the field natively — until then, re-run the script after any significant load. Reuse this derive-then-equals pattern for any future taxonomy collection.
 
@@ -171,6 +178,8 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 - **Only Approved BooksoniX records sync.** Anything not Approved his side never reaches Shopify.
 - **`custom.pubcode` exists** (see the metafield contract above) — created our side, empty until Dave maps it.
 - **`scripts/create_gazelle_metafields.py` now lives in `scripts/` and is committed.** It was previously loose in Downloads. Re-runnable and idempotent (existing definitions report `TAKEN` and are skipped); `--dry-run` prints the plan with no API calls.
+- **⚠️ EXPORT INTEGRITY RULE — check before trusting ANY export.** The **unique Handle count must equal the All Books count in admin.** The 18 Aug export held **32,708 of 50,523** products and looked perfectly healthy; it was discarded. The 19 Aug export verified at 50,523 = 50,523. `populate_thema_top.py` prints both figures at the top of every run.
+- **⚠️ `metafieldsSet` accepts at most 25 metafields per call.** Two metafields per product therefore means **12 products per batch**, not 25. A full backfill is ~4,200 batches and **~55 minutes** (50,202 products written, 0 errors, 3,202s on 19 Aug). Raising the batch size silently truncates the write.
 
 ## Native field map (what's native vs metafield)
 
@@ -221,7 +230,24 @@ All book metafields live in the **`custom`** namespace. Bind to the key path (e.
 - **S&D "grouped values" can combine formats natively** — may remove that job from Dave entirely. Pending Billy's finalised combine list.
 - The **Subject filter** now has real data behind it via `custom.thema_top` (see the metafield contract). Labels are pending Billy's sign-off — do not rename collections ahead of that call.
 - **Tags are reserved for editorial overlay** (seasonal, staff picks, prize winners), never core taxonomy. The integration applies no tags automatically.
-- **⚠️ Collections are TWO separate problems — don't bundle them.** (1) **Subject taxonomy** — **BUILT 11 Aug**: 24 collections live (All Books, Home page, 4 merch smart collections on Product Type, 18 subject smart collections on `custom.thema_top`), created by `scripts/create_gazelle_collections.py`, counts verified against export analysis. Remaining is Billy's sign-off on labels and nav picks. Note **Thema has no `B` top level** — biography is `DN*` under `D`, so a Biography category needs a second-level `thema_top2` derivation, not a new letter. (2) **Homepage curation** (Focus/Highlights) keys off PUBCODE — still blocked on Dave surfacing PUBCODE as a discrete metafield. Different owners, different blockers; solving one does not advance the other.
+- **⚠️ Collections are TWO separate problems — don't bundle them.** (1) **Subject taxonomy** — **BUILT 11 Aug, extended to two tiers 19 Aug**: **150 collections live** = All Books + Home page + 4 merch smart collections on Product Type + **20 top-level** subject collections on `custom.thema_top` + **124 level-2** sub-collections on `custom.thema_l2`, all created by `scripts/create_gazelle_collections.py`. **It is 20 top-level, not 18** — the earlier "18" was wrong wherever it appeared. Remaining is Billy's sign-off on labels and nav picks. Note **Thema has no `B` top level** — biography is `DN*` under `D`, and the L2 tier now covers it as `literature-biography`, so no new letter is needed. (2) **Homepage curation** (Focus/Highlights) keys off PUBCODE — still blocked on Dave populating `custom.pubcode`. Different owners, different blockers; solving one does not advance the other.
+
+### The level-2 sub-collection tier (built 19 Aug)
+
+- **124 sub-collections on `custom.thema_l2`**, one per Thema 2-character group holding **≥24 products** (`keep == True` in the counts CSV). 140 groups exist; 16 fell below the threshold.
+- **`custom.thema_l2`** — `list.single_line_text_field` with `smartCollectionCondition`, the first two characters of each valid Thema code. Same derive-then-equals pattern as `thema_top`, for the same reason: metafield rules support **only "is equal to"**.
+- **`custom.parent_handle`** — a COLLECTION-level `single_line_text_field` holding the parent's handle, so a template can find a parent's children without a hardcoded map.
+- **Handles are hand-curated in `HANDLE_OVERRIDES`, never derived from the EDItEUR heading.** Deriving produced 85-character URLs like `childrens-young-adult-children-s-picture-books-activity-books-early-learning-concepts`. Rule: `<parent-short>-<child-slug>`, under 40 chars, URL-safe, unique. **`PARENT_SHORT` is a fixed map, deliberately not derived from the parent handle**, so a parent can be renamed without moving 124 child URLs.
+- **⚠️ Child slugs and parent handles come from the same vocabulary, so a child can land exactly on its parent.** Five did on the first run (`medicine-nursing`, `philosophy-religion`, `history-archaeology`, `language-linguistics`, `reference-interdisciplinary`) and skipped as handle-exists. `validate_handles()` now rejects any handle equal to a top-level or merch handle, before any write.
+- **Titles start from EDItEUR Thema 1.6 English headings**, overridden in `TITLE_OVERRIDES` where the heading reads as a codelist entry. The codelist is **vendored** at `scripts/thema_labels_en_v1.6.json` so runs are reproducible offline. **Matching is on HANDLE, never title** — Billy can retitle in admin and a re-run will not create duplicates.
+- **`scripts/verify_l2.py`** runs the five post-build checks, read-only.
+
+### Maintenance routine — this tier is NOT self-maintaining
+
+1. After **any** Dave load, re-run `python3 scripts/populate_thema_top.py <export folder> --full`. New products arrive with no `thema_top` / `thema_l2` and silently miss every subject collection until it runs.
+2. Each run writes `scripts/out/thema_l2_counts.csv`. **Read it.** If a group crosses 24, create that collection by hand; if one drops below, decide by hand.
+3. **24 is a create-time rule, not a delete trigger.** An existing collection falling under 24 is not automatically removed — a live URL should not disappear because a count drifted.
+4. **Standing ask to Dave, once Billy signs off:** push `thema_top` and `thema_l2` natively, derived the same way, and the backfill retires.
 
 ## The grid-override pattern (CRITICAL — reuse for every commerce page)
 
