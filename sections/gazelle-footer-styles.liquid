@@ -34,7 +34,14 @@
     font-weight: 700;
     letter-spacing: .2em;
     text-transform: uppercase;
-    color: #e8e1d2;
+    /* Brand red, per Billy's "category headings red like corporate site".
+       #940000 is the brand site's --main-red, the red it uses for its own
+       uppercase subheadings (.rl-text-style-subheading). NOTE the corporate
+       footer does NOT actually colour its headings red - see
+       docs/brand-reference.md. This is the closest real brand precedent, not
+       a copy of the corporate footer. #b92b2f (--light-red) is the other
+       candidate; Billy picks. */
+    color: #940000;
   }
 
   /* Menu column headings — spacing. The heading owns the gap; neutralise menu.liquid's
@@ -48,14 +55,19 @@
   }
 
   /* Menu links + item spacing (independent of the block's menu_spacing setting) */
+  /* ⚠️ These colours assume the LIGHT footer. They are retuned from the
+     charcoal originals (#c4bfb2 links, #fff hover) because the footer's colour
+     scheme is moving to the corporate light grey #f2f2f2. On charcoal they are
+     unreadable, and the old ones are unreadable on light grey - so the colour
+     scheme change and this file MUST ship together. See STATUS. */
   .footer-content .menu__item a {
     font-size: 15.5px;
-    color: #c4bfb2;
+    color: #3d3a34;
     text-decoration: none;
   }
 
   .footer-content .menu__item a:hover {
-    color: #fff;
+    color: #940000;
   }
 
   .footer-content .menu__item + .menu__item {
@@ -67,7 +79,7 @@
   .footer-content .text-block.paragraph p {
     font-size: 15px;
     line-height: 1.85;
-    color: #c4bfb2;
+    color: #3d3a34;
   }
 
   .footer-content .text-block.paragraph a {
@@ -86,7 +98,7 @@
     letter-spacing: .2em;
     text-transform: uppercase;
     line-height: normal;
-    color: #e8e1d2;
+    color: #940000;
   }
 
   /* Company last line ("Registered in England & Wales, Company No. …"). There is no CSS
