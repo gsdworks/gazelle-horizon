@@ -43,90 +43,139 @@
   differently from the six subject panels.
 {% endcomment %}
 
+{%- comment -%}
+  HEADING VARIANT TOGGLE (section 1 of the visual-pass brief).
+  Change this one value and re-push to screenshot the other option:
+    'a'  Cinzel 15px / 500 / 0.02em tracking / #000 / no uppercase   <- default
+    'b'  Switzer 600 15px  (the previous treatment)
+{%- endcomment -%}
+{%- assign heading_variant = 'a' -%}
+
 {% style %}
-  /* 1. Column headings — weight only. Size and colour come from
-     menu_font_style: regular; do not restate them here or the setting stops
-     being the control. */
+  /* ---------- 1. Mega panel: column headings ---------- */
   .mega-menu__link--parent {
-    font-weight: 600;
+    {% if heading_variant == 'b' %}
+      font-family: var(--font-body--family);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: normal;
+    {% else %}
+      font-family: var(--font-heading--family);
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    {% endif %}
+    text-transform: none;
+    color: #000;
+    margin-block-end: 10px;
   }
 
-  /* 2. Third-level links. ~15px at a 1.35 line height keeps a 9-item column
-     on one screen at 13", which the native sm token does not guarantee. */
+  /* ---------- 2. Third-level links ---------- */
   .mega-menu__list .mega-menu__link:not(.mega-menu__link--parent) {
-    font-size: 0.9375rem;
+    font-family: var(--font-body--family);
+    font-size: 15px;
     line-height: 1.35;
+    color: #000;
+    text-decoration: none;
+    /* .mega-menu__link carries padding-block: var(--padding-2xs); 3px a side
+       gives the 6px between links the brief asks for. */
+    padding-block: 3px;
   }
 
-  /* 3. The trailing "All <parent>" link — last item of each column's child list.
-     Muted and letterspaced so it reads as a way out of the column rather than
-     another sibling subject. */
+  .mega-menu__list .mega-menu__link:not(.mega-menu__link--parent):hover {
+    color: #940000;          /* accent, matches scheme-1 primary */
+    text-decoration: none;   /* colour shift only, no underline */
+  }
+
+  /* ---------- 3. The trailing "All <parent>" link ---------- */
+  /* Always the last item of a column's child list, so :last-child is exact and
+     no label in build_gazelle_menu.py needs an arrow baked into it. */
   .mega-menu__list ul > li:last-child > .mega-menu__link {
+    font-family: var(--font-body--family);
+    font-size: 14px;
     color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.01em;
+  }
+
+  .mega-menu__list ul > li:last-child > .mega-menu__link::after {
+    content: ' \2192';       /* U+2192 RIGHTWARDS ARROW, inherits the muted colour */
   }
 
   .mega-menu__list ul > li:last-child > .mega-menu__link:hover {
-    color: var(--color-foreground);
+    color: #940000;
   }
 
-  /* 4. Panel width. The panel div carries `section section--full-width-margin
-     section--page-width`, so core's `.section--page-width > * { grid-column: 2 }`
-     should already drop the grid into the centred column — but it renders
-     full-bleed with content on the left edge, and the header's Width = Page
-     setting (section_width: 'page-width', confirmed in header-group.json) does
-     not constrain it. Rather than fight whatever resolves --page-width inside
-     the header's stacking context, pin the grid to the SAME token the rest of
-     the site uses, so the menu shares the 1200px rail with everything else. */
+  /* ---------- 4. Panel sheet ---------- */
+  /* White, to sit flush with the header rather than reading as a separate
+     card. Hairline top edge, no shadow - the Waterstones "calm sheet". */
+  .mega-menu {
+    background-color: #fff;
+    border-block-start: 1px solid var(--color-border, #e8e2d8);
+    box-shadow: none;
+    padding-block: 28px;
+  }
+
+  /* ---------- 5. Panel width ---------- */
+  /* The panel div carries `section section--full-width-margin section--page-width`
+     and core's `.section--page-width > * { grid-column: 2 }` should already centre
+     it, but it renders full-bleed. Pin it to the same token the rest of the site
+     uses so the menu shares the 1200px rail. */
   .mega-menu .mega-menu__grid {
     width: 100%;
     max-width: var(--page-content-width);
     margin-inline: auto;
+    --menu-horizontal-gap: 32px;
   }
 
-  /* 5. Column sizing.
-     mega-menu-list.liquid hardcodes `--menu-columns-desktop: 6` for every text
-     panel (grid_columns_count, blocks/_header-menu.liquid:122), so the grid is
-     always six equal tracks no matter how many columns a panel holds. At six
-     tracks the columns are too narrow for headings like "Children's & Young
-     Adult", and a one-column panel is left with five empty tracks.
-
-     auto-fit sizes tracks to the content: empty tracks collapse, and their
-     gutters with them.
-
-     The max is 1fr, NOT a fixed px ceiling. An earlier version used
-     minmax(200px, 224px) on the assumption that the grid is 1200px wide, so
-     five tracks plus gaps would land exactly on 1200. That assumption is
-     wrong in practice — page padding and the editor preview make the
-     container narrower — and the result was the fifth column crushing to a
-     few characters instead of wrapping. With 1fr the tracks divide whatever
-     width is actually available, and 200px is a hard floor: if five will not
-     fit at 200px, the fifth WRAPS to a second row rather than being crushed.
-
-     The 1200px cap belongs on the grid (rule 4 above), not on the sum of the
-     tracks. */
+  /* ---------- 6. Column sizing ---------- */
+  /* mega-menu-list.liquid hardcodes --menu-columns-desktop: 6 for every text
+     panel, so a panel was always six equal tracks however many columns it holds.
+     auto-fit collapses the empty tracks. The max is 1fr, NOT a px ceiling: an
+     earlier fixed 224px ceiling assumed a 1200px container and crushed the fifth
+     column when the container was narrower. 200px is a hard floor, so a column
+     that will not fit WRAPS to a second row instead of being crushed.
+     At 32px gaps: 5 x 200 + 4 x 32 = 1128, inside 1200. */
   @media screen and (min-width: 990px) {
     .mega-menu .mega-menu__grid {
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 
     /* A lone column would otherwise take the whole 1fr track and run the full
-       width of the grid. Cap it so Children's reads as a column sitting on the
-       left rail, at roughly the width it has in a multi-column panel.
-       :only-child is exact — it cannot affect any panel that has more than one
-       column. */
+       width of the grid. :only-child cannot match a multi-column panel. */
     .mega-menu .mega-menu__grid > .mega-menu__column:only-child {
       max-width: 260px;
     }
   }
 
-  /* 6. The panel sheet. Off-white with a hairline top edge and no shadow, per
-     the Waterstones reference (a calm sheet, not a floating card).
-     #f3efe8 is the theme's existing cover-panel token, kept deliberately so the
-     menu and the product hero share one off-white. */
-  .mega-menu {
-    background-color: #f3efe8;
-    border-block-start: 1px solid var(--color-border, #e8e2d8);
+  /* ---------- 7. Header bar (section 2) ---------- */
+  /* 15px is NOT available natively: type_font_primary_size offers 0.625 / 0.75 /
+     0.875 / 1 / 1.125rem only, so 0.9375rem has to come from CSS. Set the token
+     rather than font-size so anything else keyed to it follows. */
+  @media screen and (min-width: 750px) {
+    .menu-list {
+      --menu-top-level-font-size-desktop: 0.9375rem;
+    }
+  }
+
+  /* Underline on hover AND while the panel is open. [aria-expanded='true'] is
+     Horizon's open-state hook (blocks/_header-menu.liquid:394 gates the submenu
+     on it). inset box-shadow rather than border-bottom so nothing shifts by 2px.
+     NOTE: no "boxed outline" exists in the theme CSS - see the report. */
+  .menu-list__link:hover,
+  .menu-list__link[aria-expanded='true'] {
+    box-shadow: inset 0 -2px 0 0 #940000;
+  }
+
+  /* ---------- 8. Mobile drawer (section 3) ---------- */
+  /* The drawer is a different template (snippets/header-drawer.liquid) and does
+     not use .mega-menu__* at all, so the "All X" treatment has to be repeated
+     here. Third-level items reuse --child, so the last --child in a list is the
+     "All X" row. */
+  .menu-drawer__menu-item--child:last-child .menu-drawer__menu-item-text {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .menu-drawer__menu-item--child:last-child .menu-drawer__menu-item-text::after {
+    content: ' \2192';
   }
 {% endstyle %}
