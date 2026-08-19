@@ -12,11 +12,6 @@ _Last updated: 19 August 2026_
 - **DOMAIN — `shop.gazellebookservices.co.uk` serves "This store is unavailable".** Attached to the OLD Gazelle store whose subscription lapsed in July. **DNS CNAME is already correct → do NOT change any DNS record**; the fix is Shopify-side attachment. Order: (a) check the `gazelle-books-2026` plan status FIRST — a dev-plan gate blocks custom domains and makes it a Billy billing conversation; (b) Settings → Domains → Connect existing domain; (c) if "in use by another store", check Grant's password manager for the old store's admin login (Grant built its holding page 1 Apr 2026); (d) else Shopify support release via TXT record — names.co.uk access is held (`marvin@gazellebookservices.co.uk`, credentials in Billy's 3 Feb "Domain" email).
 - **Two launch-critical items sit with Dave — the archive re-activation test and the duplicates cause.** Detail under Open loops — DAVE.
 
-## Next action — verify the L2 build
-- **Run `scripts/verify_l2.py` under the GSD Gazelle Scripts app** — the five post-build checks are written but **NOT YET RUN**, because the only credentials available to the agent were the BooksoniX app's. One command, read-only:
-  `python3 scripts/verify_l2.py ~/Downloads/export-19aug`
-  Checks: 5 sampled products' metafields vs source codes; exact collection count (expect **150**); 10 sampled L2 counts vs `scripts/out/thema_l2_counts.csv` (>1% gap flagged; store 50,533 vs export 50,523, so small drift is expected); NH + NK vs the History parent; every L2 collection's `parent_handle` resolves.
-
 ## Open loops — DAVE
 **⚠️ Read the "asks of third parties" principle in `docs/build-manual.md` before adding anything here. Keep asks minimal and non-cumulative.** The Integration Tasks sheet is the single channel; **Dave's outstanding list has been answered in full** and the bundled-email task is closed.
 
@@ -84,7 +79,7 @@ Carried, lower priority:
 - **EAN product URLs** — bulk handle rename pre-launch (`/products/<13-digit EAN>`). Confirmed safe from clobber. Still blocked on the duplicate barcodes. **Check first whether Dave's newer pushes already produce EAN-shaped handles** — UNCONFIRMED.
 - **Exclusion mechanism is now permanent, not a one-off** — Billy sends EAN lists, we archive same day by script. Automatable by pubcode once `custom.pubcode` carries values.
 - **Build the subject nav menu.** `write_online_store_navigation` scope held, so scriptable. Gated on Billy's labels AND his nav-vs-filter call. Kills the **"Catagories" typo** in the placeholder menu — that must not ship.
-- **Maintenance: re-run `scripts/populate_thema_top.py <export> --full` after ANY Dave load.** Neither subject tier is self-maintaining. Read the `scripts/out/thema_l2_counts.csv` it writes; create or drop collections by hand if a group crosses 24. **24 is a create-time rule, not a delete trigger.**
+- **Maintenance: re-run `scripts/populate_thema_top.py <export> --full` after ANY Dave load.** Neither subject tier is self-maintaining. Read the `scripts/out/thema_l2_counts.csv` it writes; create or drop collections by hand if a group crosses 24. **24 is a create-time rule, not a delete trigger.** Near-misses to watch: **SM 22, YR 19, SH 18** — one Dave load could push SM or YR over the line.
 - **UNCONFIRMED whether these were done in the 11 Aug session** — verify before assuming: Format and Subject filters added in Search & Discovery; the 4 policy pages pasted into admin.
 - **Queued front-end work, no dependencies:** New Release ribbon (blocked on `publication_date` type); price display (gated on Billy); Press & Reviews (gated); Subject links (now have real targets — 150 collections); PDF catalogue section (contracted); placeholder content pages; checkout styling; notification email templates.
 - **SFTP scheduled pickup in Matrixify.** Wire it and watch it fire once — the only untested part of the pipeline. Not started.
