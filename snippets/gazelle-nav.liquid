@@ -80,6 +80,7 @@
      the header's stacking context, pin the grid to the SAME token the rest of
      the site uses, so the menu shares the 1200px rail with everything else. */
   .mega-menu .mega-menu__grid {
+    width: 100%;
     max-width: var(--page-content-width);
     margin-inline: auto;
   }
@@ -87,28 +88,36 @@
   /* 5. Column sizing.
      mega-menu-list.liquid hardcodes `--menu-columns-desktop: 6` for every text
      panel (grid_columns_count, blocks/_header-menu.liquid:122), so the grid is
-     always six equal tracks no matter how many columns a panel actually has.
-     At 1200px with --menu-horizontal-gap = --gap-xl = 20px that is
-     (1200 - 5*20) / 6 = 183px per track: too narrow for "Children's & Young
-     Adult", which wraps, and it leaves Children's with five empty tracks.
+     always six equal tracks no matter how many columns a panel holds. At six
+     tracks the columns are too narrow for headings like "Children's & Young
+     Adult", and a one-column panel is left with five empty tracks.
 
-     auto-fit sizes tracks to the content instead: empty tracks collapse (and
-     their gutters with them), so a one-column panel occupies one track rather
-     than one sixth of the grid.
+     auto-fit sizes tracks to the content: empty tracks collapse, and their
+     gutters with them.
 
-     The 224px ceiling is arithmetic, not taste: five columns is the widest
-     panel (Science & medicine), and 5*224 + 4*20 = 1200 exactly. Raising it
-     pushes the fifth column onto a second row. Trade & publishers has seven
-     L2 items and will wrap to a second row by design.
+     The max is 1fr, NOT a fixed px ceiling. An earlier version used
+     minmax(200px, 224px) on the assumption that the grid is 1200px wide, so
+     five tracks plus gaps would land exactly on 1200. That assumption is
+     wrong in practice — page padding and the editor preview make the
+     container narrower — and the result was the fifth column crushing to a
+     few characters instead of wrapping. With 1fr the tracks divide whatever
+     width is actually available, and 200px is a hard floor: if five will not
+     fit at 200px, the fifth WRAPS to a second row rather than being crushed.
 
-     justify-content: start keeps a lone column on the LEFT rather than centred,
-     so every panel's first column begins at the same x as the page rail and as
-     every other panel's first column. A centred single column would float free
-     of that shared rail. */
+     The 1200px cap belongs on the grid (rule 4 above), not on the sum of the
+     tracks. */
   @media screen and (min-width: 990px) {
     .mega-menu .mega-menu__grid {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 224px));
-      justify-content: start;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    /* A lone column would otherwise take the whole 1fr track and run the full
+       width of the grid. Cap it so Children's reads as a column sitting on the
+       left rail, at roughly the width it has in a multi-column panel.
+       :only-child is exact — it cannot affect any panel that has more than one
+       column. */
+    .mega-menu .mega-menu__grid > .mega-menu__column:only-child {
+      max-width: 260px;
     }
   }
 
