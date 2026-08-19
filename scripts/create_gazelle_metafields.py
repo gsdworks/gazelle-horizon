@@ -14,6 +14,7 @@ and are skipped, nothing is overwritten or deleted.
 -------------------------------------------------------------------------------
 HOW TO RUN (macOS terminal):
 
+  export SHOPIFY_STORE='gazelle-books-2026.myshopify.com'
   export GAZELLE_CLIENT_ID='<the client id from Dev Dashboard > Settings>'
   export GAZELLE_CLIENT_SECRET='<the secret from Dev Dashboard > Settings>'
   python3 create_gazelle_metafields.py
@@ -29,7 +30,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
-SHOP = os.environ.get("GAZELLE_SHOP", "gazelle-books-2026")
+STORE = os.environ.get("SHOPIFY_STORE", "gazelle-books-2026.myshopify.com")
 API_VERSION = "2026-07"
 CLIENT_ID = os.environ.get("GAZELLE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("GAZELLE_CLIENT_SECRET")
@@ -92,7 +93,7 @@ def get_token():
     if not CLIENT_ID or not CLIENT_SECRET:
         die("Set GAZELLE_CLIENT_ID and GAZELLE_CLIENT_SECRET env vars first "
             "(see the header of this file).")
-    url = f"https://{SHOP}.myshopify.com/admin/oauth/access_token"
+    url = f"https://{STORE}/admin/oauth/access_token"
     body = urllib.parse.urlencode({
         "grant_type": "client_credentials",
         "client_id": CLIENT_ID,
@@ -113,7 +114,7 @@ def get_token():
 
 
 def graphql(token, query, variables):
-    url = f"https://{SHOP}.myshopify.com/admin/api/{API_VERSION}/graphql.json"
+    url = f"https://{STORE}/admin/api/{API_VERSION}/graphql.json"
     payload = json.dumps({"query": query, "variables": variables}).encode()
     req = urllib.request.Request(url, data=payload, method="POST")
     req.add_header("Content-Type", "application/json")
@@ -127,7 +128,7 @@ def main():
 
     if dry_run:
         print(f"DRY RUN — no writes will be made.\n")
-        print(f"Target shop : https://{SHOP}.myshopify.com")
+        print(f"Target shop : https://{STORE}")
         print(f"API version : {API_VERSION}")
         print(f"Namespace   : {NAMESPACE}   Owner: {OWNER_TYPE}")
         print(f"\nWould create {len(DEFINITIONS)} definitions:\n")
