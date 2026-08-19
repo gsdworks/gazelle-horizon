@@ -21,11 +21,20 @@ CLIENT_SECRET = os.environ.get("GAZELLE_CLIENT_SECRET")
 API_VERSION = "2026-07"
 URL = f"https://{STORE}/admin/api/{API_VERSION}/graphql.json"
 
-if not (CLIENT_ID and CLIENT_SECRET):
-    sys.exit("Set GAZELLE_CLIENT_ID and GAZELLE_CLIENT_SECRET first (Dev Dashboard app credentials).")
+_TOKEN = None
 
 def get_token():
-    """Exchange client credentials for a short-lived Admin API access token."""
+    """Exchange client credentials for a short-lived Admin API access token.
+
+    Acquired LAZILY, on the first API call, so that --dry-run runs offline and
+    needs no credentials at all. Nothing below reaches the store until a real
+    query is made.
+    """
+    global _TOKEN
+    if _TOKEN:
+        return _TOKEN
+    if not (CLIENT_ID and CLIENT_SECRET):
+        sys.exit("Set GAZELLE_CLIENT_ID and GAZELLE_CLIENT_SECRET first (Dev Dashboard app credentials).")
     r = requests.post(f"https://{STORE}/admin/oauth/access_token",
                       json={"grant_type": "client_credentials",
                             "client_id": CLIENT_ID,
@@ -33,13 +42,12 @@ def get_token():
     if r.status_code != 200:
         sys.exit(f"Token exchange failed ({r.status_code}): {r.text}\n"
                  "Check the app is installed on the store and credentials are correct.")
-    return r.json()["access_token"]
-
-TOKEN = get_token()
-print("Token acquired OK.")
+    _TOKEN = r.json()["access_token"]
+    print("Token acquired OK.")
+    return _TOKEN
 
 def gql(query, variables=None):
-    r = requests.post(URL, headers={"X-Shopify-Access-Token": TOKEN,
+    r = requests.post(URL, headers={"X-Shopify-Access-Token": get_token(),
                                     "Content-Type": "application/json"},
                       json={"query": query, "variables": variables or {}})
     r.raise_for_status()
@@ -217,6 +225,155 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_COUNTS = os.path.expanduser("~/Downloads/thema_l2_counts.csv")
 LABELS_PATH = os.path.join(HERE, "thema_labels_en_v1.6.json")
 
+# --- Handle and title curation ---------------------------------------------
+# Handles are PERMANENT URLs, so they are hand-written, not derived from the
+# EDItEUR heading (which produces things like
+# childrens-young-adult-children-s-picture-books-activity-books-early-learning-concepts).
+# Rule: <parent-short>-<child-slug>, under 40 chars, URL-safe, unique.
+# validate_handles() enforces all three BEFORE any collection is created.
+#
+# PARENT_SHORT is a fixed map, deliberately NOT derived from the parent
+# collection handle - the parent handle can be renamed without moving every
+# child URL.
+PARENT_SHORT = {
+    "A": "arts",     "C": "language",   "D": "literature", "F": "fiction",
+    "G": "reference","J": "society",    "K": "business",   "L": "law",
+    "M": "medicine", "N": "history",    "P": "science",    "Q": "philosophy",
+    "R": "environment", "S": "sport",   "T": "technology", "U": "computing",
+    "V": "health",   "W": "lifestyle",  "X": "comics",     "Y": "childrens",
+}
+
+# Child slug per L2 code. Short curated noun phrases, not EDItEUR headings.
+# A code missing here falls back to the heading truncated at the first
+# comma/colon/slash and slugified - see child_slug().
+HANDLE_OVERRIDES = {
+    # A - The Arts
+    "AG": "fine-decorative-arts", "AJ": "photography", "AK": "design-illustration",
+    "AT": "performing-arts", "AM": "architecture", "AV": "music",
+    "AF": "art-forms", "AB": "general",
+    # C - Language
+    "CJ": "teaching-learning", "CF": "linguistics", "CB": "reference",
+    # D - Literature
+    "DN": "biography", "DC": "poetry", "DS": "history-criticism",
+    "DD": "plays-drama", "DB": "classical-texts",
+    # F - Fiction
+    "FB": "literary", "FJ": "adventure", "FY": "special-features",
+    "FV": "historical", "FH": "thriller", "FX": "narrative-themes",
+    "FM": "fantasy", "FF": "crime", "FL": "science-fiction", "FR": "romance",
+    "FS": "family-life", "FK": "horror", "FU": "humour",
+    "FN": "traditional-tales", "FW": "religious", "FT": "family-saga",
+    "FD": "speculative",
+    # G - Reference
+    "GT": "interdisciplinary", "GB": "encyclopaedias", "GL": "library-museum",
+    "GP": "research-methods",
+    # J - Society
+    "JB": "culture", "JP": "politics", "JN": "education", "JM": "psychology",
+    "JH": "sociology-anthropology", "JW": "warfare", "JK": "social-welfare",
+    # K - Business
+    "KC": "economics", "KJ": "management", "KN": "industry",
+    "KF": "finance-accounting",
+    # L - Law
+    "LN": "jurisdictions", "LA": "jurisprudence", "LB": "international",
+    # M - Medicine
+    "MB": "general", "MJ": "clinical", "MK": "specialties",
+    "MF": "basic-sciences", "MN": "surgery", "MQ": "nursing",
+    "MX": "complementary", "MR": "study-guides", "MZ": "veterinary",
+    # N - History
+    "NH": "general", "NK": "archaeology",
+    # P - Science
+    "PS": "biology", "PH": "physics", "PN": "chemistry", "PB": "mathematics",
+    "PD": "general", "PG": "astronomy",
+    # Q - Philosophy & Religion
+    "QR": "religion", "QD": "general",
+    # R - Environment
+    "RN": "general", "RB": "earth-sciences", "RG": "geography",
+    "RP": "regional-planning",
+    # S - Sport
+    "SF": "ball-sports", "SC": "general", "SZ": "outdoor-pursuits",
+    "SR": "combat-sports", "SV": "field-sports", "ST": "winter-sports",
+    "SP": "water-sports",
+    # T - Technology
+    "TQ": "environmental", "TH": "energy", "TG": "mechanical",
+    "TD": "industrial-chemistry", "TV": "agriculture", "TB": "general",
+    "TJ": "electronics", "TT": "applied-sciences", "TC": "biochemical",
+    "TN": "civil-building", "TR": "transport",
+    # U - Computing
+    "UY": "computer-science", "UM": "programming", "UN": "databases",
+    "UB": "general", "UD": "digital-lifestyle", "UR": "security",
+    "UT": "networking", "UF": "business-applications",
+    # V - Health
+    "VX": "mind-body-spirit", "VF": "family-health", "VS": "self-help",
+    # W - Lifestyle
+    "WN": "nature", "WT": "travel", "WD": "hobbies-games", "WB": "cookery",
+    "WG": "transport", "WM": "gardening", "WQ": "local-family-history",
+    "WZ": "stationery-gifts", "WF": "crafts", "WC": "antiques-collectables",
+    "WH": "humour", "WK": "home-diy", "WJ": "personal-style",
+    # X - Comics
+    "XA": "manga-styles", "XQ": "genres",
+    # Y - Children's
+    "YN": "general-interest", "YF": "fiction", "YB": "picture-books",
+    "YP": "educational", "YX": "personal-social", "YD": "poetry",
+}
+
+# Starting titles where the EDItEUR heading reads as a codelist entry rather
+# than a shop label. Billy renames later; matching is on HANDLE, never title,
+# so a retitle in admin does not cause a re-run to create duplicates.
+TITLE_OVERRIDES = {
+    # Slash-separated or "and"-style headings normalised to the "&" house
+    # style used by the rest of this map.
+    "DN": "Biography & non-fiction", "DB": "Ancient & classical texts",
+    "FH": "Thrillers & suspense", "FW": "Religious & spiritual fiction",
+    "GB": "Encyclopaedias & reference", "JP": "Politics & government",
+    "JH": "Sociology & anthropology", "MJ": "Clinical & internal medicine",
+    "QR": "Religion & beliefs", "SR": "Combat sports & self-defence",
+    "TV": "Agriculture & farming", "WC": "Antiques & collectables",
+    "AG": "Fine & decorative arts", "AJ": "Photography",
+    "AK": "Design & illustration", "AF": "Art forms", "AB": "The arts: general",
+    "CB": "Language reference", "CJ": "Language teaching & learning",
+    "DC": "Poetry", "DS": "Literary history & criticism", "DD": "Plays & drama",
+    "FB": "Literary fiction", "FY": "Fiction: special features",
+    "FX": "Fiction: narrative themes", "FF": "Crime & mystery fiction",
+    "FJ": "Adventure & action fiction", "FS": "Family life fiction",
+    "FK": "Horror & supernatural fiction", "FT": "Family saga fiction",
+    "FN": "Traditional tales & retellings",
+    "GL": "Library & information sciences", "GP": "Research & information",
+    "JB": "Society & culture", "JN": "Education",
+    "JK": "Social welfare & criminology",
+    "KJ": "Business & management", "KN": "Industry & industrial studies",
+    "KF": "Finance & accounting",
+    "LN": "Laws by jurisdiction & area", "LA": "Jurisprudence",
+    "MB": "Medicine: general", "MK": "Medical specialties",
+    "MF": "Pre-clinical medicine", "MQ": "Nursing",
+    "MX": "Complementary medicine", "MR": "Medical study guides",
+    "PS": "Biology & life sciences", "PD": "Science: general",
+    "PG": "Astronomy & space",
+    "RP": "Regional & area planning",
+    "SF": "Ball sports", "SZ": "Outdoor pursuits", "SV": "Field sports",
+    "ST": "Winter sports", "SP": "Water sports",
+    "TQ": "Environmental technology", "TH": "Energy technology",
+    "TG": "Mechanical engineering",
+    "TD": "Industrial chemistry & manufacturing", "TB": "Technology: general",
+    "TJ": "Electronics & communications", "TT": "Applied sciences",
+    "TN": "Civil engineering & building", "TR": "Transport technology",
+    "UM": "Programming & software engineering",
+    "UN": "Databases & data management", "UB": "IT: general",
+    "UD": "Digital lifestyle guides", "UT": "Networking & communications",
+    "VF": "Family & health", "VS": "Self-help & personal development",
+    "WN": "Nature & the natural world", "WT": "Travel & holidays",
+    "WD": "Hobbies, quizzes & games", "WB": "Cookery, food & drink",
+    "WG": "Transport", "WQ": "Local & family history",
+    "WZ": "Stationery & gifts", "WF": "Crafts & handicrafts",
+    "WK": "Home maintenance & DIY", "WJ": "Personal style guides",
+    "XA": "Manga & comic styles", "XQ": "Comics by genre",
+    "YN": "Children's: general interest",
+    "YB": "Children's: picture & activity books",
+    "YF": "Children's & teenage fiction",
+    "YX": "Children's: personal & social topics",
+    "YD": "Children's poetry & anthologies",
+}
+
+MAX_HANDLE_LEN = 40
+
 COLLECTION_Q = """
 query($q: String!) {
   collections(first: 1, query: $q) { nodes { id handle title sortOrder } }
@@ -253,6 +410,38 @@ def slugify(s):
     s = s.lower().replace("&", " and ")
     s = _re.sub(r"[^a-z0-9]+", "-", s)
     return _re.sub(r"-+", "-", s).strip("-")
+
+def title_for(code, labels):
+    """Starting title: curated override, else the EDItEUR heading, else code."""
+    return TITLE_OVERRIDES.get(code) or labels.get(code) or code
+
+def child_slug(code, labels):
+    """Curated slug, else the heading truncated at the first , : or / ."""
+    if code in HANDLE_OVERRIDES:
+        return HANDLE_OVERRIDES[code]
+    heading = labels.get(code, code)
+    return slugify(_re.split(r"[,:/]", heading)[0])
+
+def handle_for(code, letter, labels):
+    return f"{PARENT_SHORT[letter]}-{child_slug(code, labels)}"
+
+def validate_handles(plan):
+    """Fail loudly BEFORE any write. plan = [(code, letter, title, handle, n)]."""
+    problems = []
+    seen = {}
+    for code, letter, _title, handle, _n in plan:
+        if len(handle) >= MAX_HANDLE_LEN:
+            problems.append(f"{code}: handle is {len(handle)} chars (limit {MAX_HANDLE_LEN}): {handle}")
+        if not _re.fullmatch(r"[a-z0-9-]+", handle):
+            problems.append(f"{code}: handle is not URL-safe: {handle}")
+        if handle in seen:
+            problems.append(f"{code}: handle collides with {seen[handle]}: {handle}")
+        seen[handle] = code
+    if problems:
+        print("\nHANDLE VALIDATION FAILED - nothing was created:")
+        for p in problems:
+            print("  " + p)
+        sys.exit(1)
 
 def load_labels():
     with open(LABELS_PATH, encoding="utf-8") as f:
@@ -291,28 +480,36 @@ def build_l2():
     labels = load_labels()
     kept = load_kept(counts_path)
 
-    parents = parent_map()
-    print(f"top-level collections found in store: {len(parents)} "
-          f"({''.join(sorted(parents))})")
-    orphan_letters = sorted({r['top'] for r in kept} - set(parents))
-    if orphan_letters:
-        sys.exit(f"STOP: kept L2 codes reference top-level letters with no "
-                 f"collection in the store: {orphan_letters}. Create those first.")
+    unknown_parents = sorted({r["top"] for r in kept} - set(PARENT_SHORT))
+    if unknown_parents:
+        sys.exit(f"STOP: kept rows use top-level letters absent from "
+                 f"PARENT_SHORT: {unknown_parents}")
 
+    no_curated = [r["l2"] for r in kept if r["l2"] not in HANDLE_OVERRIDES]
+    if no_curated:
+        print(f"NOTE: {len(no_curated)} codes have no curated slug, falling "
+              f"back to the truncated heading: {no_curated}")
     no_label = [r["l2"] for r in kept if r["l2"] not in labels]
     if no_label:
-        print(f"NOTE: {len(no_label)} codes have no Thema heading, falling back "
-              f"to the bare code: {no_label}")
+        print(f"NOTE: {len(no_label)} codes have no Thema heading: {no_label}")
+
+    plan = [(r["l2"], r["top"], title_for(r["l2"], labels),
+             handle_for(r["l2"], r["top"], labels), int(r["products"]))
+            for r in kept]
+    validate_handles(plan)
+    longest = max(plan, key=lambda x: len(x[3]))
+    print(f"handles OK: {len(plan)} unique, all URL-safe, all < {MAX_HANDLE_LEN} "
+          f"chars (longest {len(longest[3])}: {longest[3]})")
 
     if dry:
-        print("\nDRY RUN - no writes. Planned collections:\n")
-        for r in kept:
-            p = parents[r["top"]]
-            title = labels.get(r["l2"], r["l2"])
-            print(f"  {r['l2']:<3} {title[:52]:<54} "
-                  f"{p['handle']}-{slugify(title)}  ({r['products']} products)")
-        print(f"\n{len(kept)} collections would be created. "
-              f"Re-run without --dry-run to create them.")
+        # Offline - no token, no API calls.
+        print("\nDRY RUN - no writes, no API calls.\n")
+        print(f"  {'CODE':<5} {'TITLE':<38} {'HANDLE':<40} {'PRODUCTS':>8}")
+        print("  " + "-" * 93)
+        for code, letter, title, handle, n in sorted(plan, key=lambda x: (x[1], -x[4])):
+            print(f"  {code:<5} {title[:38]:<38} {handle:<40} {n:>8}")
+        print(f"\n{len(plan)} collections would be created.")
+        print("Re-run without --dry-run to create them.")
         return
 
     def_id = ensure_definition("thema_l2", "Thema Level-2 Subjects",
@@ -321,23 +518,25 @@ def build_l2():
     ensure_definition("parent_handle", "Parent Collection Handle",
                       "single_line_text_field", "COLLECTION")
 
+    parents = parent_map()
+    print(f"top-level collections found in store: {len(parents)} "
+          f"({''.join(sorted(parents))})")
+    orphan = sorted({r["top"] for r in kept} - set(parents))
+    if orphan:
+        sys.exit(f"STOP: kept L2 codes reference top-level letters with no "
+                 f"collection in the store: {orphan}. Create those first.")
+
     pubs = gql(PUBLICATIONS_Q)["publications"]["nodes"]
     online = next((p for p in pubs if p["name"] == "Online Store"), None)
     if not online:
         sys.exit(f"Online Store publication not found. Publications: {[p['name'] for p in pubs]}")
 
     created, skipped, failed = 0, 0, 0
-    for r in kept:
-        parent = parents[r["top"]]
-        title = labels.get(r["l2"], r["l2"])
-        # The handle is a URL and outlives the code, so it is built from the
-        # heading, never from the bare code. Matching on handle (not title)
-        # is what lets Billy retitle without a re-run creating duplicates.
-        handle = f"{parent['handle']}-{slugify(title)}"
-
+    for code, letter, title, handle, _n in plan:
+        parent = parents[letter]
         existing = gql(EXISTING_Q, {"q": f"handle:{handle}"})["collections"]["nodes"]
         if existing:
-            print(f"SKIP  {r['l2']:<3} {title[:40]:<42} (handle exists)")
+            print(f"SKIP  {code:<3} {title[:36]:<38} (handle exists)")
             skipped += 1
             continue
 
@@ -348,7 +547,7 @@ def build_l2():
             "ruleSet": {"appliedDisjunctively": False, "rules": [{
                 "column": "PRODUCT_METAFIELD_DEFINITION",
                 "relation": "EQUALS",
-                "condition": r["l2"],
+                "condition": code,
                 "conditionObjectId": def_id,
             }]},
             "metafields": [{
@@ -360,14 +559,14 @@ def build_l2():
         }
         res = gql(CREATE_M, {"input": inp})["collectionCreate"]
         if res["userErrors"]:
-            print(f"FAIL  {r['l2']:<3} {title[:40]:<42} {res['userErrors']}")
+            print(f"FAIL  {code:<3} {title[:36]:<38} {res['userErrors']}")
             failed += 1
             continue
         pub = gql(PUBLISH_M, {"id": res["collection"]["id"],
                               "input": [{"publicationId": online["id"]}]})
         errs = pub["publishablePublish"]["userErrors"]
         note = f" (publish errors: {errs})" if errs else ""
-        print(f"OK    {r['l2']:<3} {title[:40]:<42} -> {handle}{note}")
+        print(f"OK    {code:<3} {title[:36]:<38} -> {handle}{note}")
         created += 1
 
     print(f"\nL2 done. created={created} skipped={skipped} failed={failed}")
