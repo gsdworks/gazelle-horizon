@@ -6,6 +6,26 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 OUT="PROJECT-CONTEXT.md"
+BILLY_CSV="docs/BILLY-TASKS.csv"
+BILLY_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ2NfxnnefJR_a2mHpfIU0dDQZam_xp-qEStqVhY8QL0Nux0RMFQobDWVHCociiWgYbXLgzQI_up-Oh/pub?output=csv"
+
+# Pull Billy's task sheet fresh on every run. Deliberately NON-FATAL: this
+# script runs with `set -e`, and a flaky network or a Google outage must not
+# stop PROJECT-CONTEXT.md regenerating. On failure the previously fetched
+# copy is kept and a warning is printed.
+mkdir -p docs
+if curl -sSL --max-time 30 --fail -o "$BILLY_CSV.tmp" "$BILLY_URL" 2>/dev/null \
+   && [ -s "$BILLY_CSV.tmp" ]; then
+  mv "$BILLY_CSV.tmp" "$BILLY_CSV"
+  echo "Fetched Billy's task sheet -> $BILLY_CSV ($(wc -l < "$BILLY_CSV" | tr -d ' ') lines)."
+else
+  rm -f "$BILLY_CSV.tmp"
+  if [ -f "$BILLY_CSV" ]; then
+    echo "WARNING: could not fetch Billy's task sheet; keeping the existing $BILLY_CSV."
+  else
+    echo "WARNING: could not fetch Billy's task sheet and no local copy exists."
+  fi
+fi
 
 {
   echo "# Gazelle Books — Project Context"
@@ -28,6 +48,23 @@ OUT="PROJECT-CONTEXT.md"
       cat "$f"; echo; echo "---"; echo
     done
   fi
+  # Billy's task sheet, verbatim. Rows are matched by the Page column and
+  # columns D/E are his and Grant's status columns - never reorder rows.
+  if [ -f "$BILLY_CSV" ]; then
+    echo "# Billy's task sheet (docs/BILLY-TASKS.csv)"
+    echo
+    echo "_Fetched from the published Google Sheet by build-context.sh. Columns D/E are"
+    echo "status columns (D = Billy, E = Grant Notes). Rows are matched by the **Page**"
+    echo "column - do NOT reorder rows._"
+    echo
+    echo '```csv'
+    cat "$BILLY_CSV"
+    echo '```'
+    echo
+    echo "---"
+    echo
+  fi
+
   cat DONE.md
 } > "$OUT"
 

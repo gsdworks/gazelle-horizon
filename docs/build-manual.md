@@ -34,6 +34,14 @@ Rules that follow from this:
 - Env vars are standardised across every script: **`SHOPIFY_STORE`** (full `*.myshopify.com` domain), **`GAZELLE_CLIENT_ID`**, **`GAZELLE_CLIENT_SECRET`**.
 - **⚠️ 19 Aug: the BooksoniX Integration client id AND secret were found exported in the environment Claude Code inherits.** `verify_l2.py` hard-refuses to run if it sees that client id. Check what a terminal is carrying before running anything: the app a script authenticates as is decided by whatever happens to be exported, not by intent.
 
+## Billy's task sheet — `docs/BILLY-TASKS.csv`
+
+Billy's live task sheet is published as CSV and **re-fetched by `./build-context.sh` on every run**, then embedded verbatim in `PROJECT-CONTEXT.md`. It is a generated file: never hand-edit `docs/BILLY-TASKS.csv`, the next context build overwrites it.
+
+- **Rows are matched by the `Page` column.** That column is the key everything else keys off — **do NOT reorder rows**, and do not rename a `Page` value, or the status columns stop lining up with the item they describe.
+- **Columns D and E are status columns** — **D = Billy**, **E = Grant Notes**. Their headers sit on the sheet's *second* row, not the first, so a naive CSV read shows columns D/E as unnamed.
+- The fetch is **deliberately non-fatal**: `build-context.sh` runs under `set -e`, and a network failure must not stop `PROJECT-CONTEXT.md` regenerating. On failure the previously fetched copy is kept and a warning printed — so **check for that warning** before trusting the sheet in the context file to be current.
+
 ## Working principles — asks of third parties
 
 **Minimise asks of Dave Hyman.** He was paid roughly **£500** for the BooksoniX integration, it has dragged on for months, and he is frustrated. Every additional question spends goodwill we may need for something genuinely blocking.
