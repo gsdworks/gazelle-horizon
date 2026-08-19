@@ -71,7 +71,48 @@
     color: var(--color-foreground);
   }
 
-  /* 4. The panel sheet. Off-white with a hairline top edge and no shadow, per
+  /* 4. Panel width. The panel div carries `section section--full-width-margin
+     section--page-width`, so core's `.section--page-width > * { grid-column: 2 }`
+     should already drop the grid into the centred column — but it renders
+     full-bleed with content on the left edge, and the header's Width = Page
+     setting (section_width: 'page-width', confirmed in header-group.json) does
+     not constrain it. Rather than fight whatever resolves --page-width inside
+     the header's stacking context, pin the grid to the SAME token the rest of
+     the site uses, so the menu shares the 1200px rail with everything else. */
+  .mega-menu .mega-menu__grid {
+    max-width: var(--page-content-width);
+    margin-inline: auto;
+  }
+
+  /* 5. Column sizing.
+     mega-menu-list.liquid hardcodes `--menu-columns-desktop: 6` for every text
+     panel (grid_columns_count, blocks/_header-menu.liquid:122), so the grid is
+     always six equal tracks no matter how many columns a panel actually has.
+     At 1200px with --menu-horizontal-gap = --gap-xl = 20px that is
+     (1200 - 5*20) / 6 = 183px per track: too narrow for "Children's & Young
+     Adult", which wraps, and it leaves Children's with five empty tracks.
+
+     auto-fit sizes tracks to the content instead: empty tracks collapse (and
+     their gutters with them), so a one-column panel occupies one track rather
+     than one sixth of the grid.
+
+     The 224px ceiling is arithmetic, not taste: five columns is the widest
+     panel (Science & medicine), and 5*224 + 4*20 = 1200 exactly. Raising it
+     pushes the fifth column onto a second row. Trade & publishers has seven
+     L2 items and will wrap to a second row by design.
+
+     justify-content: start keeps a lone column on the LEFT rather than centred,
+     so every panel's first column begins at the same x as the page rail and as
+     every other panel's first column. A centred single column would float free
+     of that shared rail. */
+  @media screen and (min-width: 990px) {
+    .mega-menu .mega-menu__grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 224px));
+      justify-content: start;
+    }
+  }
+
+  /* 6. The panel sheet. Off-white with a hairline top edge and no shadow, per
      the Waterstones reference (a calm sheet, not a floating card).
      #f3efe8 is the theme's existing cover-panel token, kept deliberately so the
      menu and the product hero share one off-white. */
