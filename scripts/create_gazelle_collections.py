@@ -252,7 +252,7 @@ HANDLE_OVERRIDES = {
     "AT": "performing-arts", "AM": "architecture", "AV": "music",
     "AF": "art-forms", "AB": "general",
     # C - Language
-    "CJ": "teaching-learning", "CF": "linguistics", "CB": "reference",
+    "CJ": "teaching-learning", "CF": "linguistics-studies", "CB": "reference",
     # D - Literature
     "DN": "biography", "DC": "poetry", "DS": "history-criticism",
     "DD": "plays-drama", "DB": "classical-texts",
@@ -264,7 +264,7 @@ HANDLE_OVERRIDES = {
     "FN": "traditional-tales", "FW": "religious", "FT": "family-saga",
     "FD": "speculative",
     # G - Reference
-    "GT": "interdisciplinary", "GB": "encyclopaedias", "GL": "library-museum",
+    "GT": "interdisciplinary-studies", "GB": "encyclopaedias", "GL": "library-museum",
     "GP": "research-methods",
     # J - Society
     "JB": "culture", "JP": "politics", "JN": "education", "JM": "psychology",
@@ -276,15 +276,15 @@ HANDLE_OVERRIDES = {
     "LN": "jurisdictions", "LA": "jurisprudence", "LB": "international",
     # M - Medicine
     "MB": "general", "MJ": "clinical", "MK": "specialties",
-    "MF": "basic-sciences", "MN": "surgery", "MQ": "nursing",
+    "MF": "basic-sciences", "MN": "surgery", "MQ": "nursing-studies",
     "MX": "complementary", "MR": "study-guides", "MZ": "veterinary",
     # N - History
-    "NH": "general", "NK": "archaeology",
+    "NH": "general", "NK": "archaeology-studies",
     # P - Science
     "PS": "biology", "PH": "physics", "PN": "chemistry", "PB": "mathematics",
     "PD": "general", "PG": "astronomy",
     # Q - Philosophy & Religion
-    "QR": "religion", "QD": "general",
+    "QR": "religion-beliefs", "QD": "general",
     # R - Environment
     "RN": "general", "RB": "earth-sciences", "RG": "geography",
     "RP": "regional-planning",
@@ -374,6 +374,20 @@ TITLE_OVERRIDES = {
 
 MAX_HANDLE_LEN = 40
 
+def reserved_handles():
+    """Handles a child collection must never equal.
+
+    The parent handles and the merch handles are both built from the same
+    vocabulary as the child slugs, so a child can land exactly on its own
+    parent - medicine-nursing (MQ) collided with the Medicine & Nursing
+    parent on the 19 Aug run, along with philosophy-religion, history-
+    archaeology, language-linguistics and reference-interdisciplinary.
+    The per-handle exists check made those 5 skip harmlessly rather than
+    overwrite anything, but they must be caught BEFORE the run, not after.
+    """
+    return ({h for _l, _t, h in SUBJECT_COLLECTIONS} |
+            {c["handle"] for c in COLLECTIONS})
+
 COLLECTION_Q = """
 query($q: String!) {
   collections(first: 1, query: $q) { nodes { id handle title sortOrder } }
@@ -429,7 +443,11 @@ def validate_handles(plan):
     """Fail loudly BEFORE any write. plan = [(code, letter, title, handle, n)]."""
     problems = []
     seen = {}
+    reserved = reserved_handles()
     for code, letter, _title, handle, _n in plan:
+        if handle in reserved:
+            problems.append(f"{code}: handle collides with an existing "
+                            f"top-level or merch collection: {handle}")
         if len(handle) >= MAX_HANDLE_LEN:
             problems.append(f"{code}: handle is {len(handle)} chars (limit {MAX_HANDLE_LEN}): {handle}")
         if not _re.fullmatch(r"[a-z0-9-]+", handle):

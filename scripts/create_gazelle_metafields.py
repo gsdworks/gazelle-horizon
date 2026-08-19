@@ -3,7 +3,7 @@
 Create the Gazelle product metafield definitions in Shopify.
 
 What it does:
-  1. Exchanges your BooksoniX Integration app's Client ID + Secret for a
+  1. Exchanges the GSD Gazelle Scripts app's Client ID + Secret for a
      short-lived Admin API token (client-credentials grant).
   2. Creates each product metafield definition below via metafieldDefinitionCreate.
   3. Reports per-field: created / already-exists / error.
@@ -18,6 +18,13 @@ HOW TO RUN (macOS terminal):
   export GAZELLE_CLIENT_ID='<the client id from Dev Dashboard > Settings>'
   export GAZELLE_CLIENT_SECRET='<the secret from Dev Dashboard > Settings>'
   python3 create_gazelle_metafields.py
+
+APP: all scripts in this folder now run under the **GSD Gazelle Scripts**
+custom app (client ID 9c1cdb65353e42b36432a5d185e24199 - an identifier, not
+a secret; the secret is never committed). Do NOT use the BooksoniX
+Integration app: it lacks **write_publications**, so it cannot publish a
+collection to the Online Store channel. The 11 Aug collection run must
+therefore have used a different app than the one its docstring named.
 
 (No pip installs needed - uses the Python standard library only.)
 -------------------------------------------------------------------------------
